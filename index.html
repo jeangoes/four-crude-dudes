@@ -66,7 +66,6 @@
   <h1>⚔ FOUR CRUDE DUDES ⚔</h1>
   <div class="subtitle">16-BIT ADVENTURE — SELECT YOUR HERO</div>
   <div style="font-size:7px;color:#555;margin-top:4px;letter-spacing:1px;">v1.1</div>
-  <div style="font-size:7px;color:#555;margin-top:4px;letter-spacing:1px;">v1.1</div>
   <div class="char-select">
     <div class="char-card" onclick="selectChar('OWO')" id="card-OWO">
       <img class="char-sprite-thumb" id="thumb-OWO" src="">
@@ -208,6 +207,14 @@ const CHARS={
   LATHURIEL:{hp:53,atk:39,spd:3.0,color:'#4FC3F7',accent:'#FF7043',special:'SOUND WAVE'}
 };
 function selectChar(name){selectedChar=name;document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('selected'));document.getElementById('card-'+name).classList.add('selected');}
+
+// Preload thumbnails immediately on page load
+(function preloadThumbs(){
+  Object.entries(SPRITE_DATA).forEach(([name,src])=>{
+    const t=document.getElementById('thumb-'+name);
+    if(t)t.src=src;
+  });
+})();
 selectChar('ELANDRIN');
 function isTouchDevice(){return('ontouchstart' in window)||navigator.maxTouchPoints>0;}
 function startGame(){document.getElementById('title-screen').style.display='none';document.getElementById('game-wrap').style.display='flex';document.getElementById('hud-name').textContent=selectedChar;if(isTouchDevice())document.getElementById('touch-controls').style.display='flex';loadSprites(initGame);}
