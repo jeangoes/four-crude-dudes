@@ -71,7 +71,7 @@
 <div id="title-screen">
   <h1>⚔ FOUR CRUDE DUDES ⚔</h1>
   <div class="subtitle">16-BIT ADVENTURE — SELECT YOUR HERO</div>
-  <div class="version">v2.0</div>
+  <div class="version">v2.1</div>
   <div class="char-select" id="char-select"></div>
   <button class="start-btn" onclick="startGame()">▶ START GAME</button>
   <div id="keyboard-hint" style="font-size:7px;color:#444;margin-top:10px;">Arrows/WASD = Move &nbsp; Z = Attack &nbsp; X = Special &nbsp; P = Pause</div>
@@ -135,6 +135,7 @@
 <div class="overlay" id="pause-screen">
   <h2>PAUSED</h2>
   <button class="start-btn" onclick="togglePause()">RESUME</button>
+  <button class="start-btn" style="animation:none;background:#444;margin-top:14px;" onclick="returnToMenu()">MAIN MENU</button>
 </div>
 
 <script>
@@ -153,28 +154,29 @@
 // Each character has a distinct `attack` and `special` move profile.
 const CHAR_DEFS = {
   OWO: {
-    label:'OWO', archetype:'RANGER', role:'🏹 Long-range kiter',
-    hp:70, atk:12, spd:115, color:'#8BC34A', accent:'#FF5722', sprite:'SPR_OWO',
-    attack: { kind:'projectile', cooldown:0.28, speed:430, range:560, dmg:1.0, count:1, w:18, h:5, color:'#FFE082', knockback:60, pierce:0 },
-    special: { kind:'projectile', cost:30, cooldown:0.9, speed:380, dmg:1.5, count:3, spread:0.35, w:22, h:8, color:'#FF5722', knockback:120, pierce:1, name:'DRAGON FIRE' }
+    label:'OWO', archetype:'KENDER RANGER', role:'🏹 Frágil, ágil, munição',
+    hp:70, atk:12, spd:125, color:'#8BC34A', accent:'#FF5722', sprite:'SPR_OWO',
+    ammo:8, reloadTime:1.4, hasDash:true,
+    attack: { kind:'projectile', cooldown:0.16, speed:460, range:680, dmg:1.0, count:1, w:18, h:5, color:'#FFE082', knockback:50, pierce:0, usesAmmo:true },
+    special: { kind:'hail', cost:30, cooldown:1.0, dmg:0.7, ticks:6, areaW:160, areaH:50, color:'#FFE082', knockback:30, name:'HAIL OF ARROWS' }
   },
   ELANDRIN: {
-    label:'ELANDRIN', archetype:'CLERIC', role:'🛡 Tanky frontline',
-    hp:140, atk:16, spd:90, color:'#78909C', accent:'#FFCA28', sprite:'SPR_ELANDRIN',
-    attack: { kind:'melee', cooldown:0.42, reach:54, arc:56, dmg:1.0, knockback:140 },
-    special: { kind:'melee_aoe', cost:30, cooldown:1.0, reach:70, arc:80, dmg:1.4, knockback:260, stun:0.8, color:'#FFCA28', name:'SHIELD BASH' }
+    label:'ELANDRIN', archetype:'CLERIC OF PALADINE', role:'🛡 Tanque, dano sagrado em área',
+    hp:140, atk:16, spd:92, color:'#78909C', accent:'#FFD54F', sprite:'SPR_ELANDRIN',
+    attack: { kind:'melee', cooldown:0.40, reach:64, arc:56, dmg:1.0, knockback:150 },
+    special: { kind:'toll', cost:35, cooldown:1.2, dmg:1.0, woundedMult:2.0, color:'#FFD54F', name:'TOLL THE DEAD' }
   },
   DARIAN: {
-    label:'DARIAN', archetype:'MAGE', role:'🪄 Glass cannon AoE',
-    hp:60, atk:14, spd:105, color:'#5C6BC0', accent:'#26C6DA', sprite:'SPR_DARIAN',
-    attack: { kind:'projectile', cooldown:0.36, speed:360, range:480, dmg:1.1, count:1, w:14, h:10, color:'#80DEEA', knockback:50, pierce:1 },
-    special: { kind:'burst_aoe', cost:30, cooldown:1.1, radius:95, dmg:1.8, knockback:200, color:'#26C6DA', name:'ARCANE BURST' }
+    label:'DARIAN', archetype:'EVOKER OF HIGH SORCERY', role:'🔥 Glass cannon de fogo',
+    hp:60, atk:14, spd:108, color:'#5C6BC0', accent:'#FF7043', sprite:'SPR_DARIAN',
+    attack: { kind:'projectile', cooldown:0.34, speed:420, range:720, dmg:1.1, count:1, w:14, h:10, color:'#FF8A50', knockback:50, pierce:0, ember:true },
+    special: { kind:'fireball', cost:35, cooldown:1.2, speed:300, radius:80, dmg:1.7, knockback:220, color:'#FF5722', name:'FIREBALL' }
   },
   LATHURIEL: {
-    label:'LATHURIEL', archetype:'BARD', role:'🎸 Versatile multi-hit',
-    hp:100, atk:13, spd:105, color:'#4FC3F7', accent:'#FF7043', sprite:'SPR_LATHURIEL',
-    attack: { kind:'melee', cooldown:0.34, reach:62, arc:74, dmg:0.9, knockback:90, multi:true },
-    special: { kind:'wave', cost:30, cooldown:1.0, speed:300, dmg:1.3, w:30, h:80, color:'#FF7043', knockback:180, pierce:99, name:'POWER CHORD' }
+    label:'LATHURIEL', archetype:'BARD / WARLOCK', role:'🎸 Versátil, debuff + homing',
+    hp:100, atk:13, spd:108, color:'#4FC3F7', accent:'#B388FF', sprite:'SPR_LATHURIEL',
+    attack: { kind:'melee', cooldown:0.32, reach:70, arc:74, dmg:0.85, knockback:80, multi:true, debuff:0.6, debuffTime:3.0 },
+    special: { kind:'eldritch', cost:35, cooldown:1.1, speed:300, dmg:1.0, count:3, w:14, h:14, color:'#B388FF', knockback:60, name:'ELDRITCH BLAST' }
   }
 };
 
@@ -208,10 +210,13 @@ const sprites = {};
 let spritesLoaded = 0;
 function loadSprites(cb){
   const names = Object.keys(SPRITE_DATA);
+  // Already loaded once (e.g. returning from menu) — just run the callback
+  if(spritesLoaded>=names.length){ cb(); return; }
+  let done=0;
   names.forEach(name=>{
     const img = new Image();
-    img.onload = ()=>{ sprites[name]=img; spritesLoaded++; if(spritesLoaded===names.length) cb(); };
-    img.onerror= ()=>{ spritesLoaded++; if(spritesLoaded===names.length) cb(); };
+    img.onload = ()=>{ sprites[name]=img; done++; if(done===names.length){ spritesLoaded=names.length; cb(); } };
+    img.onerror= ()=>{ done++; if(done===names.length){ spritesLoaded=names.length; cb(); } };
     img.src = SPRITE_DATA[name];
   });
 }
@@ -340,7 +345,9 @@ function initGame(){
     def:def, name:selectedChar, color:def.color, accent:def.accent,
     facing:1, jumping:false, walking:false,
     attackCd:0, specialCd:0, hitTimer:0, invincible:0,
-    bob:0, attackAnim:0
+    bob:0, attackAnim:0,
+    ammo: def.ammo||0, maxAmmo: def.ammo||0, reloading:0,
+    dashCd:0, dashTimer:0, jumpHeld:false
   };
 
   spawnWave(0);
@@ -372,7 +379,9 @@ function makeEnemy(type,x,y){
     color:d.color,acc:d.acc,score:d.score,behavior:d.behavior,boss:!!d.boss,
     shootCd:d.shootCd||0, shootTimer:Math.random()*1.5, projSpeed:d.projSpeed||0,
     hitTimer:0, atkTimer:0, stun:0, bob:Math.random()*6.28,
-    dying:false, dyingTimer:0, vx:0
+    dying:false, dyingTimer:0, vx:0,
+    debuff:0, debuffTimer:0,
+    chargeCd:3, charging:0, summoned:false
   };
 }
 
@@ -392,11 +401,12 @@ function addCombo(){
 }
 function resetCombo(){ combo=0; }
 
-function damageEnemy(e, dmg, knockback, stun){
+function damageEnemy(e, dmg, knockback, stun, debuffAmt, debuffTime){
   e.hp -= dmg;
   e.hitTimer = 0.16;
   if(knockback){ e.vx += (e.facing>0? -1:1) * knockback; }
   if(stun){ e.stun = Math.max(e.stun, stun); }
+  if(debuffAmt){ e.debuff = debuffAmt; e.debuffTimer = debuffTime||3.0; }
   spawnParticles(e.x, e.y-e.h/2, '#FFD700', 6);
   spawnHitText(e.x, e.y-e.h-8, Math.round(dmg), '#FFD700');
   hitStop = Math.max(hitStop, 0.05);
@@ -457,19 +467,24 @@ function rectsOverlap(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && 
 
 function doAttack(){
   const p=player, a=p.def.attack, atkStat=p.def.atk;
+  // Ammo gating for ranged ammo users (Owo)
+  if(a.usesAmmo){
+    if(p.reloading>0) return;          // can't fire mid-reload
+    if(p.ammo<=0){ p.reloading=p.def.reloadTime; return; }
+    p.ammo--;
+    if(p.ammo<=0) p.reloading=p.def.reloadTime;
+  }
   p.attackCd = a.cooldown; p.attackAnim=0.15;
   if(a.kind==='projectile'){
-    for(let i=0;i<a.count;i++){
-      projectiles.push({
-        x:p.x+p.facing*30, y:p.y-34, vx:p.facing*a.speed, vy:0,
-        w:a.w, h:a.h, color:a.color, dmg:atkStat*a.dmg, knockback:a.knockback,
-        pierce:a.pierce||0, life: a.range/a.speed, friendly:true, hits:[]
-      });
-    }
+    projectiles.push({
+      x:p.x+p.facing*30, y:p.y-34, vx:p.facing*a.speed, vy:0,
+      w:a.w, h:a.h, color:a.color, dmg:atkStat*a.dmg, knockback:a.knockback,
+      pierce:a.pierce||0, life: a.range/a.speed, friendly:true, hits:[], ember:a.ember
+    });
     SFX.arrow();
   } else if(a.kind==='melee'){
     const ax = p.facing>0 ? p.x+20 : p.x-a.reach-20+p.w;
-    p.attackBox = { x:ax, y:p.y-p.h, w:a.reach, h:p.h, timer:0.12, dmg:atkStat*a.dmg, knockback:a.knockback, multi:a.multi, hits:[] };
+    p.attackBox = { x:ax, y:p.y-p.h, w:a.reach, h:p.h, timer:0.12, dmg:atkStat*a.dmg, knockback:a.knockback, multi:a.multi, hits:[], debuff:a.debuff, debuffTime:a.debuffTime };
     SFX.melee();
   }
 }
@@ -478,44 +493,63 @@ function doSpecial(){
   const p=player, s=p.def.special, atkStat=p.def.atk;
   if(p.specialCd>0 || p.mp<s.cost) return;
   p.specialCd=s.cooldown; p.mp-=s.cost; p.specialName=s.name; p.specialFlash=1.0;
-  if(s.kind==='projectile'){
-    for(let i=0;i<s.count;i++){
-      const ang = (i-(s.count-1)/2)*s.spread;
-      projectiles.push({
-        x:p.x+p.facing*30, y:p.y-34, vx:p.facing*s.speed*Math.cos(ang), vy:s.speed*Math.sin(ang),
-        w:s.w, h:s.h, color:s.color, dmg:atkStat*s.dmg, knockback:s.knockback,
-        pierce:s.pierce||0, life:1.4, friendly:true, special:true, hits:[]
+
+  if(s.kind==='hail'){
+    // OWO — Hail of Arrows: rain damage over an area in front, several ticks
+    const cx = p.x + p.facing*(60+s.areaW/2);
+    p.hailFx = { x:cx, y:FLOOR_MIN-40, w:s.areaW, h:s.areaH, life:0.7, color:s.color };
+    let tick=0;
+    const doTick=()=>{
+      if(gameState!==STATE.PLAYING) return;
+      enemies.forEach(e=>{
+        if(e.dying) return;
+        if(Math.abs(e.x-cx) < s.areaW/2){
+          damageEnemy(e, atkStat*s.dmg, s.knockback, 0);
+        }
       });
-    }
-    SFX.special();
-  } else if(s.kind==='wave'){
-    projectiles.push({
-      x:p.x+p.facing*30, y:p.y-p.h, vx:p.facing*s.speed, vy:0,
-      w:s.w, h:s.h, color:s.color, dmg:atkStat*s.dmg, knockback:s.knockback,
-      pierce:s.pierce, life:1.6, friendly:true, special:true, wave:true, hits:[]
-    });
-    SFX.wave();
-  } else if(s.kind==='burst_aoe'){
-    // immediate radial burst around player
+      for(let i=0;i<5;i++) particles.push({x:cx+(Math.random()-0.5)*s.areaW, y:FLOOR_MIN-30, vx:0, vy:300, color:s.color, size:3, life:0.3, maxLife:0.3});
+      tick++;
+      if(tick<s.ticks) setTimeout(doTick, 90);
+    };
+    doTick();
+    SFX.arrow();
+
+  } else if(s.kind==='toll'){
+    // ELANDRIN — Toll the Dead: damage ALL on screen, double vs wounded
     enemies.forEach(e=>{
       if(e.dying) return;
-      const dx=e.x-p.x, dy=(e.y-e.h/2)-(p.y-30);
-      if(Math.sqrt(dx*dx+dy*dy) < s.radius){
-        e.facing = dx>0?-1:1; // knock outward
-        damageEnemy(e, atkStat*s.dmg, s.knockback, 0);
+      const sx=e.x-scrollX;
+      if(sx>-40 && sx<W+40){
+        const wounded = e.hp < e.maxHp;
+        const dmg = atkStat*s.dmg*(wounded?s.woundedMult:1);
+        e.facing = (e.x>p.x)?-1:1;
+        damageEnemy(e, dmg, 40, 0);
       }
     });
-    for(let i=0;i<20;i++){
-      const ang=Math.random()*6.28, r=Math.random()*s.radius;
-      particles.push({x:p.x+Math.cos(ang)*r, y:p.y-30+Math.sin(ang)*r, vx:Math.cos(ang)*120, vy:Math.sin(ang)*120, color:s.color, size:3+Math.random()*4, life:0.5, maxLife:0.5});
+    // bell shockwave visual
+    p.burstFx={x:p.x,y:p.y-30,r:0,maxR:W,life:0.5,color:s.color,ring:true};
+    for(let i=0;i<24;i++){ const ang=Math.random()*6.28; particles.push({x:p.x,y:p.y-30,vx:Math.cos(ang)*200,vy:Math.sin(ang)*200,color:s.color,size:3+Math.random()*3,life:0.5,maxLife:0.5}); }
+    SFX.special();
+
+  } else if(s.kind==='fireball'){
+    // DARIAN — Fireball: travels then explodes in AoE
+    projectiles.push({
+      x:p.x+p.facing*30, y:p.y-34, vx:p.facing*s.speed, vy:0,
+      w:16, h:16, color:s.color, dmg:0, knockback:0, pierce:99, life:1.6,
+      friendly:true, special:true, fireball:true, radius:s.radius, blastDmg:atkStat*s.dmg, blastKb:s.knockback, hits:[]
+    });
+    SFX.magic();
+
+  } else if(s.kind==='eldritch'){
+    // LATHURIEL — Eldritch Blast: homing bolts
+    for(let i=0;i<s.count;i++){
+      projectiles.push({
+        x:p.x+p.facing*30, y:p.y-34-(i-1)*10, vx:p.facing*s.speed, vy:0,
+        w:s.w, h:s.h, color:s.color, dmg:atkStat*s.dmg, knockback:s.knockback,
+        pierce:0, life:2.0, friendly:true, special:true, homing:true, hits:[]
+      });
     }
-    p.burstFx={x:p.x,y:p.y-30,r:0,maxR:s.radius,life:0.3,color:s.color};
-    SFX.special();
-  } else if(s.kind==='melee_aoe'){
-    const ax = p.facing>0 ? p.x+10 : p.x-s.reach-10+p.w;
-    p.attackBox = { x:ax, y:p.y-p.h-10, w:s.reach, h:p.h+20, timer:0.15, dmg:atkStat*s.dmg, knockback:s.knockback, stun:s.stun, multi:true, hits:[] };
-    p.burstFx={x:p.x+p.facing*30,y:p.y-30,r:0,maxR:s.reach,life:0.25,color:s.color};
-    SFX.special();
+    SFX.magic();
   }
 }
 
@@ -529,9 +563,22 @@ function updatePlayer(dt){
 
   if(moveL){ p.x-=spd*dt; p.facing=-1; }
   if(moveR){ p.x+=spd*dt; p.facing=1; }
-  if(moveU&&!p.jumping){ p.vy=-340; p.jumping=true; }
+
+  // Jump (with edge detection for Kender dash)
+  if(moveU && !p.jumpHeld){
+    if(!p.jumping){ p.vy=-340; p.jumping=true; }
+    // Kender dash: quick burst in facing direction if moving horizontally
+    if(p.def.hasDash && p.dashCd<=0 && (moveL||moveR)){
+      p.dashTimer=0.18; p.dashCd=0.8;
+    }
+  }
+  p.jumpHeld = moveU;
   if(moveD&&!p.jumping) p.y=Math.min(p.y+spd*0.5*dt, FLOOR_MAX);
   if(moveU&&p.y>FLOOR_MIN&&!p.jumping) p.y=Math.max(p.y-spd*0.5*dt, FLOOR_MIN);
+
+  // dash movement
+  if(p.dashCd>0) p.dashCd-=dt;
+  if(p.dashTimer>0){ p.dashTimer-=dt; p.x += p.facing*420*dt; p.invincible=Math.max(p.invincible,0.05); }
 
   autoScrollX += AUTO_SCROLL*dt;
   p.x = Math.max(autoScrollX+50, Math.min(autoScrollX+W-50, p.x));
@@ -542,6 +589,9 @@ function updatePlayer(dt){
   if(screenX>W*0.6) scrollX+=(screenX-W*0.6)*0.15;
   if(screenX<W*0.3) scrollX=Math.max(autoScrollX,scrollX-(W*0.3-screenX)*0.15);
   scrollX=Math.max(scrollX,autoScrollX);
+
+  // reload (ammo characters)
+  if(p.reloading>0){ p.reloading-=dt; if(p.reloading<=0){ p.ammo=p.maxAmmo; } }
 
   if(p.attackCd>0) p.attackCd-=dt;
   if(p.specialCd>0) p.specialCd-=dt;
@@ -558,14 +608,18 @@ function updatePlayer(dt){
       if(e.dying||ab.hits.includes(e)) return;
       if(rectsOverlap({x:ab.x-scrollX,y:ab.y,w:ab.w,h:ab.h},{x:e.x-scrollX,y:e.y-e.h,w:e.w,h:e.h})){
         ab.hits.push(e);
-        damageEnemy(e, ab.dmg, ab.knockback, ab.stun||0);
+        damageEnemy(e, ab.dmg, ab.knockback, ab.stun||0, ab.debuff, ab.debuffTime);
         if(!ab.multi) ab.timer=0;
       }
     });
     if(ab.timer<=0) p.attackBox=null;
   }
 
-  if(p.burstFx){ p.burstFx.r += (p.burstFx.maxR/0.25)*dt; p.burstFx.life-=dt; if(p.burstFx.life<=0) p.burstFx=null; }
+  if(p.burstFx){
+    const speed = p.burstFx.ring ? (p.burstFx.maxR/0.5) : (p.burstFx.maxR/0.25);
+    p.burstFx.r += speed*dt; p.burstFx.life-=dt; if(p.burstFx.life<=0) p.burstFx=null;
+  }
+  if(p.hailFx){ p.hailFx.life-=dt; if(p.hailFx.life<=0) p.hailFx=null; }
 
   p.mp=Math.min(p.maxMp, p.mp+18*dt);
   if(p.hitTimer>0) p.hitTimer-=dt;
@@ -582,14 +636,39 @@ function updateEnemies(dt){
     if(e.dying){ e.dyingTimer-=dt; if(e.dyingTimer<=0) e.dead=true; return; }
     // knockback friction
     if(e.vx){ e.x+=e.vx*dt; e.vx*=Math.pow(0.02,dt); if(Math.abs(e.vx)<2) e.vx=0; }
+    // debuff decay (Vicious Mockery)
+    if(e.debuffTimer>0){ e.debuffTimer-=dt; if(e.debuffTimer<=0) e.debuff=0; }
     if(e.stun>0){ e.stun-=dt; e.bob+=dt*4; return; }
 
     const dx=p.x-e.x, dy=p.y-e.y, dist=Math.hypot(dx,dy);
     const sx=e.x-scrollX;
     e.facing = dx>0?1:-1;
 
+    // Boss summon at 50% HP
+    if(e.boss && !e.summoned && e.hp <= e.maxHp*0.5){
+      e.summoned=true;
+      for(let k=0;k<2;k++){
+        const m=makeEnemy('grunt', e.x+(k?80:-80), e.y);
+        enemies.push(m);
+        spawnParticles(m.x, m.y-20, '#F48FB1', 10);
+      }
+      spawnHitText(e.x, e.y-e.h-14, 'SUMMON!', '#F48FB1');
+    }
+
     if(sx>-80&&sx<W+80){
-      if(e.behavior==='chase'){
+      if(e.boss){
+        // boss: charge occasionally, otherwise advance
+        if(e.chargeCd>0) e.chargeCd-=dt;
+        if(e.charging>0){
+          e.charging-=dt;
+          e.x += e.facing * 260 * dt;
+        } else if(e.chargeCd<=0 && dist<320 && dist>60){
+          e.charging=0.5; e.chargeCd=4;
+          spawnHitText(e.x, e.y-e.h-14, '!', '#ff4466');
+        } else {
+          if(dist>44){ e.x+=Math.sign(dx)*e.spd*dt; e.y+=Math.sign(dy)*e.spd*0.5*dt; }
+        }
+      } else if(e.behavior==='chase'){
         if(dist>44){ e.x+=Math.sign(dx)*e.spd*dt; e.y+=Math.sign(dy)*e.spd*0.5*dt; }
       } else if(e.behavior==='kite'){
         // keep mid distance, shoot
@@ -599,7 +678,8 @@ function updateEnemies(dt){
         e.shootTimer-=dt;
         if(e.shootTimer<=0 && Math.abs(dy)<60 && sx>0 && sx<W){
           e.shootTimer=e.shootCd;
-          projectiles.push({x:e.x,y:e.y-22,vx:Math.sign(dx)*e.projSpeed,vy:0,w:8,h:6,color:e.acc,dmg:e.atk,life:2.5,friendly:false});
+          const dmg = e.atk*(e.debuff||1);
+          projectiles.push({x:e.x,y:e.y-22,vx:Math.sign(dx)*e.projSpeed,vy:0,w:8,h:6,color:e.acc,dmg:dmg,life:2.5,friendly:false});
         }
       } else if(e.behavior==='guard'){
         // slow advance, harder to stagger
@@ -610,7 +690,9 @@ function updateEnemies(dt){
 
     if(e.atkTimer>0) e.atkTimer-=dt;
     if(dist<48 && e.atkTimer<=0 && player.invincible<=0){
-      e.atkTimer=1.0; hurtPlayer(e.atk);
+      e.atkTimer=1.0;
+      const dmg = Math.round(e.atk*(e.debuff||1));
+      hurtPlayer(dmg);
     }
     if(e.hitTimer>0) e.hitTimer-=dt;
     e.bob+=dt*6;
@@ -623,19 +705,53 @@ function updateEnemies(dt){
 
 function updateProjectiles(dt){
   projectiles.forEach(pr=>{
+    // homing (Eldritch Blast): steer toward nearest enemy
+    if(pr.homing){
+      let best=null, bd=1e9;
+      enemies.forEach(e=>{ if(e.dying) return; const d=Math.hypot(e.x-pr.x,(e.y-e.h/2)-pr.y); if(d<bd){bd=d;best=e;} });
+      if(best){
+        const tx=best.x-pr.x, ty=(best.y-best.h/2)-pr.y, tl=Math.hypot(tx,ty)||1;
+        const sp=Math.hypot(pr.vx,pr.vy)||300;
+        pr.vx += (tx/tl*sp - pr.vx)*Math.min(1,6*dt);
+        pr.vy += (ty/tl*sp - pr.vy)*Math.min(1,6*dt);
+      }
+    }
     pr.x+=pr.vx*dt; pr.y+=pr.vy*dt; pr.life-=dt;
+
+    // fireball trail
+    if(pr.fireball && Math.random()<0.6){
+      particles.push({x:pr.x,y:pr.y,vx:0,vy:0,color:'#FF8A50',size:3+Math.random()*3,life:0.3,maxLife:0.3});
+    }
+
     if(pr.friendly){
+      let exploded=false;
       enemies.forEach(e=>{
         if(e.dying||(pr.hits&&pr.hits.includes(e))) return;
         if(rectsOverlap({x:pr.x-scrollX,y:pr.y,w:pr.w,h:pr.h},{x:e.x-scrollX,y:e.y-e.h,w:e.w,h:e.h})){
+          if(pr.fireball){ exploded=true; return; }
           if(pr.hits) pr.hits.push(e);
           damageEnemy(e, pr.dmg, pr.knockback, 0);
           if(pr.pierce>0){ pr.pierce--; } else { pr.life=0; }
         }
       });
+      // fireball explodes on contact or at end of life
+      if(pr.fireball && (exploded || pr.life<=0)){
+        const cx=pr.x, cy=pr.y;
+        enemies.forEach(e=>{
+          if(e.dying) return;
+          if(Math.hypot(e.x-cx,(e.y-e.h/2)-cy) < pr.radius){
+            e.facing=(e.x>cx)?-1:1;
+            damageEnemy(e, pr.blastDmg, pr.blastKb, 0);
+          }
+        });
+        for(let i=0;i<22;i++){ const ang=Math.random()*6.28,r=Math.random()*pr.radius; particles.push({x:cx+Math.cos(ang)*r,y:cy+Math.sin(ang)*r,vx:Math.cos(ang)*160,vy:Math.sin(ang)*160,color:i%2?'#FF5722':'#FFC107',size:3+Math.random()*4,life:0.5,maxLife:0.5}); }
+        player.burstFx={x:cx,y:cy,r:0,maxR:pr.radius,life:0.3,color:'#FF5722'};
+        SFX.special();
+        pr.life=0;
+      }
     } else {
       if(player.invincible<=0 && rectsOverlap({x:pr.x-scrollX,y:pr.y,w:pr.w,h:pr.h},{x:player.x-scrollX,y:player.y-player.h,w:player.w,h:player.h})){
-        hurtPlayer(pr.dmg); pr.life=0;
+        hurtPlayer(Math.round(pr.dmg)); pr.life=0;
       }
     }
   });
@@ -666,7 +782,15 @@ function updateHUD(){
   document.getElementById('mp-bar').style.width=(player.mp/player.maxMp)*100+'%';
   document.getElementById('score-display').textContent='SCORE: '+score;
   document.getElementById('lives-display').textContent='❤'.repeat(Math.max(0,lives+1));
-  document.getElementById('combo-display').textContent = combo>=2 ? combo+'x COMBO!' : '';
+  let comboTxt = combo>=2 ? combo+'x COMBO!' : '';
+  if(player.def.attack.usesAmmo){
+    const ammoTxt = player.reloading>0 ? 'RELOADING…' : '🏹'+player.ammo+'/'+player.maxAmmo;
+    comboTxt = comboTxt ? comboTxt : ammoTxt;
+    // show ammo always, combo when active
+    document.getElementById('combo-display').textContent = combo>=2 ? combo+'x! '+ammoTxt : ammoTxt;
+    return;
+  }
+  document.getElementById('combo-display').textContent = comboTxt;
 }
 
 // ============ DRAW ============
@@ -719,11 +843,18 @@ function draw(){
   ctx.ellipse(Math.floor(player.x-scrollX+player.w/2),player.jumping?FLOOR_Y+5:player.y+5,player.w*0.5,5,0,0,Math.PI*2);
   ctx.fill();
 
-  // burst fx
+  // burst fx (Toll shockwave, Fireball blast)
   if(player.burstFx){
     const b=player.burstFx;
-    ctx.strokeStyle=b.color; ctx.globalAlpha=Math.max(0,b.life*3); ctx.lineWidth=3;
+    ctx.strokeStyle=b.color; ctx.globalAlpha=Math.max(0,b.life*(b.ring?2:3)); ctx.lineWidth=3;
     ctx.beginPath(); ctx.arc(b.x-scrollX,b.y,b.r,0,Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // hail of arrows area
+  if(player.hailFx){
+    const h=player.hailFx;
+    ctx.globalAlpha=Math.max(0,h.life*1.2)*0.5; ctx.fillStyle=h.color;
+    ctx.fillRect(h.x-scrollX-h.w/2, FLOOR_MIN-50, h.w, FLOOR_MAX-FLOOR_MIN+90);
     ctx.globalAlpha=1;
   }
 
@@ -804,6 +935,19 @@ function togglePause(){
     lastTime=performance.now();
     requestAnimationFrame(loop);
   }
+}
+
+function returnToMenu(){
+  // stop the loop and reset to character selection
+  gameState=STATE.MENU;
+  document.getElementById('pause-screen').style.display='none';
+  document.getElementById('game-over').style.display='none';
+  document.getElementById('win-screen').style.display='none';
+  document.getElementById('boss-bar-wrap').style.display='none';
+  document.getElementById('game-wrap').style.display='none';
+  document.getElementById('title-screen').style.display='flex';
+  // clear any in-flight state so a fresh game starts clean
+  enemies=[]; projectiles=[]; particles=[]; hitTexts=[]; bossRef=null;
 }
 
 // ============ INIT ============
