@@ -24,25 +24,25 @@
   .start-btn{font-family:'Press Start 2P',monospace;font-size:clamp(9px,3vw,11px);background:#c0392b;color:#fff;border:none;padding:12px 28px;cursor:pointer;margin-top:8px;animation:blink 1s step-end infinite;touch-action:manipulation;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
   .start-btn:active{background:#e74c3c;animation:none;}
-  #game-wrap{display:none;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;height:100%;}
-  #ui{width:100%;max-width:640px;background:#111;padding:6px 10px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;flex-shrink:0;}
+  #game-wrap{display:none;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;height:100%;--game-w:640px;}
+  #ui{width:100%;max-width:var(--game-w);background:#111;padding:6px 10px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;flex-shrink:0;}
   .hud-section{display:flex;align-items:center;gap:6px;}
-  .hud-name{font-size:clamp(6px,2vw,8px);color:#f5c518;}
+  .hud-name{font-size:clamp(8px,1.2vw,13px);color:#f5c518;}
   .hud-bar-wrap{display:flex;flex-direction:column;gap:2px;}
-  .hud-bar-label{font-size:6px;color:#aaa;}
-  .hud-bar{width:clamp(70px,20vw,120px);height:7px;background:#333;border:1px solid #555;}
+  .hud-bar-label{font-size:clamp(6px,0.9vw,10px);color:#aaa;}
+  .hud-bar{width:clamp(90px,12vw,200px);height:clamp(7px,0.9vw,12px);background:#333;border:1px solid #555;}
   .hud-bar-fill{height:100%;transition:width 0.1s;}
   .hp-fill{background:linear-gradient(to right,#e74c3c,#ff6b6b);}
   .mp-fill{background:linear-gradient(to right,#2980b9,#74b9ff);}
-  #combo-display{font-size:7px;color:#FFD700;text-align:center;min-height:9px;}
-  #score-display{font-size:clamp(6px,2vw,9px);color:#f5c518;text-align:center;}
-  #lives-display{font-size:clamp(6px,2vw,8px);color:#f5c518;}
-  #boss-bar-wrap{display:none;width:100%;max-width:640px;background:#1a0008;padding:5px 10px;flex-shrink:0;border-bottom:2px solid #c0392b;}
-  #boss-bar-name{font-size:8px;color:#ff4466;margin-bottom:3px;text-align:center;}
-  #boss-bar-outer{width:100%;height:10px;background:#333;border:1px solid #c0392b;}
+  #combo-display{font-size:clamp(7px,1vw,12px);color:#FFD700;text-align:center;min-height:9px;}
+  #score-display{font-size:clamp(8px,1.2vw,14px);color:#f5c518;text-align:center;}
+  #lives-display{font-size:clamp(8px,1.1vw,14px);color:#f5c518;}
+  #boss-bar-wrap{display:none;width:100%;max-width:var(--game-w);background:#1a0008;padding:5px 10px;flex-shrink:0;border-bottom:2px solid #c0392b;}
+  #boss-bar-name{font-size:clamp(8px,1.1vw,13px);color:#ff4466;margin-bottom:3px;text-align:center;}
+  #boss-bar-outer{width:100%;height:clamp(10px,1.2vw,16px);background:#333;border:1px solid #c0392b;}
   #boss-bar-fill{height:100%;background:linear-gradient(to right,#c0392b,#ff6b6b);transition:width 0.1s;}
-  #gameCanvas{display:block;width:100%;max-width:640px;height:auto;border-left:2px solid #333;border-right:2px solid #333;image-rendering:pixelated;flex-shrink:0;}
-  #touch-controls{display:none;width:100%;max-width:640px;background:#0d0a0d;padding:10px 14px 14px;flex-direction:row;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;}
+  #gameCanvas{display:block;width:100%;max-width:var(--game-w);height:auto;border-left:2px solid #333;border-right:2px solid #333;image-rendering:pixelated;flex-shrink:0;}
+  #touch-controls{display:none;width:100%;max-width:var(--game-w);background:#0d0a0d;padding:10px 14px 14px;flex-direction:row;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;}
   #dpad{position:relative;width:110px;height:110px;flex-shrink:0;}
   .dpad-btn{position:absolute;width:36px;height:36px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,0.5);cursor:pointer;user-select:none;}
   .dpad-btn:active,.dpad-btn.pressed{background:rgba(245,197,24,0.3);border-color:#f5c518;color:#f5c518;}
@@ -71,7 +71,7 @@
 <div id="title-screen">
   <h1>⚔ FOUR CRUDE DUDES ⚔</h1>
   <div class="subtitle">16-BIT ADVENTURE — SELECT YOUR HERO</div>
-  <div class="version">v2.1</div>
+  <div class="version">v2.2</div>
   <div class="char-select" id="char-select"></div>
   <button class="start-btn" onclick="startGame()">▶ START GAME</button>
   <div id="keyboard-hint" style="font-size:7px;color:#444;margin-top:10px;">Arrows/WASD = Move &nbsp; Z = Attack &nbsp; X = Special &nbsp; P = Pause</div>
@@ -182,22 +182,28 @@ const CHAR_DEFS = {
 
 // ---- ENEMY DEFINITIONS ----
 const ENEMY_DEFS = {
-  grunt:  { hp:40, atk:7,  spd:75,  w:28, h:44, color:'#B71C1C', acc:'#FF5252', score:100, behavior:'chase' },
-  archer: { hp:25, atk:6,  spd:55,  w:22, h:40, color:'#4A148C', acc:'#CE93D8', score:150, behavior:'kite',  shootCd:1.5, projSpeed:240 },
-  knight: { hp:80, atk:13, spd:48,  w:32, h:48, color:'#37474F', acc:'#90A4AE', score:200, behavior:'guard' },
-  boss:   { hp:340, atk:18, spd:62, w:54, h:70, color:'#880E4F', acc:'#F48FB1', score:1000, behavior:'chase', boss:true }
+  grunt:  { hp:45, atk:7,  spd:90,  w:28, h:44, color:'#B71C1C', acc:'#FF5252', score:100, behavior:'chase' },
+  archer: { hp:28, atk:6,  spd:60,  w:22, h:40, color:'#4A148C', acc:'#CE93D8', score:150, behavior:'kite',  shootCd:0.95, projSpeed:280 },
+  knight: { hp:95, atk:15, spd:58,  w:32, h:48, color:'#37474F', acc:'#90A4AE', score:200, behavior:'guard' },
+  boss:   { hp:420, atk:18, spd:66, w:54, h:70, color:'#880E4F', acc:'#F48FB1', score:1000, behavior:'chase', boss:true }
 };
 
 // ---- WAVE DESIGN ----
 // Each wave: list of {type, n}. Boss wave triggers the finale.
+// Difficulty rises across the run; reinforcements arrive mid-wave (see updateWaves).
 const WAVES = [
-  [{type:'grunt',n:3}],
-  [{type:'grunt',n:2},{type:'archer',n:1}],
-  [{type:'knight',n:1},{type:'grunt',n:2}],
-  [{type:'archer',n:2},{type:'grunt',n:1}],
-  [{type:'knight',n:2},{type:'archer',n:1}],
+  [{type:'grunt',n:4}],
+  [{type:'grunt',n:4},{type:'archer',n:2}],
+  [{type:'grunt',n:3},{type:'archer',n:2},{type:'knight',n:1}],
+  [{type:'knight',n:2},{type:'grunt',n:3},{type:'archer',n:2}],
+  [{type:'archer',n:4},{type:'grunt',n:3},{type:'knight',n:1}],
+  [{type:'knight',n:3},{type:'archer',n:3},{type:'grunt',n:3}],
+  [{type:'knight',n:3},{type:'archer',n:4},{type:'grunt',n:4}],
+  [{type:'knight',n:4},{type:'archer',n:4},{type:'grunt',n:5}],
   [{type:'boss',n:1}]
 ];
+// How many enemies stay on screen at once (pressure). Rises with wave.
+const MAX_ONSCREEN_BASE = 5;
 
 // ============ SPRITES ============
 const SPRITE_DATA = {
@@ -312,6 +318,7 @@ let selectedChar = 'ELANDRIN';
 let player, enemies, projectiles, particles, hitTexts;
 let scrollX, autoScrollX, waveIndex, waveClearTimer, bossRef;
 let score, kills, combo, comboTimer, hitStop, lives;
+let spawnQueue, maxOnscreen, reinforceTimer;
 
 const FLOOR_Y=230, FLOOR_MIN=180, FLOOR_MAX=250, AUTO_SCROLL=30; // px/sec
 
@@ -324,11 +331,30 @@ function selectChar(name){
 function getBestScore(){ try{ return parseInt(localStorage.getItem('fcd_best')||'0',10); }catch(e){ return 0; } }
 function setBestScore(s){ try{ localStorage.setItem('fcd_best',String(s)); }catch(e){} }
 
+function fitGameSize(){
+  const wrap = document.getElementById('game-wrap');
+  if(!wrap) return;
+  const touch = isTouchDevice();
+  // Reserve vertical space for HUD (and touch controls on mobile)
+  const reservedV = touch ? 230 : 90;
+  const availW = window.innerWidth;
+  const availH = window.innerHeight - reservedV;
+  // Canvas is 2:1 (640x320). Pick the largest width fitting both dims.
+  let w = Math.min(availW, availH * 2);
+  // On desktop don't go absurdly large; on mobile use full width
+  const cap = touch ? availW : Math.min(availW, 1600);
+  w = Math.min(w, cap);
+  w = Math.max(w, 320); // never smaller than playable
+  wrap.style.setProperty('--game-w', Math.floor(w) + 'px');
+}
+window.addEventListener('resize', fitGameSize);
+
 function startGame(){
   document.getElementById('title-screen').style.display='none';
   document.getElementById('game-wrap').style.display='flex';
   document.getElementById('hud-name').textContent=CHAR_DEFS[selectedChar].label;
   if(isTouchDevice()) document.getElementById('touch-controls').style.display='flex';
+  fitGameSize();
   getAudio(); // unlock audio on user gesture
   loadSprites(initGame);
 }
@@ -337,6 +363,7 @@ function initGame(){
   const def = CHAR_DEFS[selectedChar];
   scrollX=0; autoScrollX=0; waveIndex=0; waveClearTimer=0; bossRef=null;
   score=0; kills=0; combo=0; comboTimer=0; hitStop=0; lives=3;
+  spawnQueue=[]; maxOnscreen=MAX_ONSCREEN_BASE; reinforceTimer=0;
   enemies=[]; projectiles=[]; particles=[]; hitTexts=[];
 
   player = {
@@ -357,25 +384,56 @@ function initGame(){
 }
 
 // ============ WAVE SPAWNING ============
+// Build a queue of enemy types for this wave. Enemies enter from the queue
+// as room frees up (maxOnscreen), keeping constant pressure instead of
+// dumping everything at once and then waiting.
 function spawnWave(idx){
   const wave = WAVES[idx];
   if(!wave) return;
-  let offset=0;
-  wave.forEach(grp=>{
-    for(let i=0;i<grp.n;i++){
-      const e = makeEnemy(grp.type, scrollX+W+80+offset*120, FLOOR_MIN+Math.random()*(FLOOR_MAX-FLOOR_MIN));
-      enemies.push(e);
-      if(grp.type==='boss'){ bossRef=e; document.getElementById('boss-bar-wrap').style.display='block'; }
-      offset++;
-    }
-  });
+  spawnQueue = [];
+  wave.forEach(grp=>{ for(let i=0;i<grp.n;i++) spawnQueue.push(grp.type); });
+
+  // Boss waves: spawn boss immediately, no queue pressure
+  if(spawnQueue.length===1 && spawnQueue[0]==='boss'){
+    const b = makeEnemy('boss', scrollX+W+120, FLOOR_Y);
+    enemies.push(b); bossRef=b;
+    document.getElementById('boss-bar-wrap').style.display='block';
+    spawnQueue=[];
+    return;
+  }
+
+  // Pressure scales up with wave number (more enemies on screen later)
+  maxOnscreen = MAX_ONSCREEN_BASE + Math.floor(idx*0.7); // 5,5,6,7,7,8,9,9...
+  reinforceTimer = 0;
+  // seed the initial batch
+  fillFromQueue(true);
 }
+
+// Spawn from queue until on-screen cap is reached
+function fillFromQueue(initial){
+  let guard=0;
+  while(spawnQueue.length>0 && aliveCount() < maxOnscreen && guard<10){
+    const type = spawnQueue.shift();
+    const offset = (initial? aliveCount() : 0);
+    const e = makeEnemy(type, scrollX+W+80+offset*120 + Math.random()*60,
+                        FLOOR_MIN+Math.random()*(FLOOR_MAX-FLOOR_MIN));
+    enemies.push(e);
+    guard++;
+  }
+}
+
+function aliveCount(){ return enemies.filter(e=>!e.dying).length; }
 
 function makeEnemy(type,x,y){
   const d=ENEMY_DEFS[type];
+  // Difficulty scaling: from wave 3 on (waveIndex>=2), +12% HP and +7% dmg per wave
+  const tier = Math.max(0, (waveIndex||0) - 2);
+  const hpMul = d.boss ? 1 : (1 + tier*0.12);
+  const atkMul = d.boss ? 1 : (1 + tier*0.07);
+  const hp = Math.round(d.hp*hpMul);
   return {
     type,x,y,vy:0,facing:-1,
-    hp:d.hp,maxHp:d.hp,atk:d.atk,spd:d.spd,w:d.w,h:d.h,
+    hp:hp,maxHp:hp,atk:Math.round(d.atk*atkMul),spd:d.spd,w:d.w,h:d.h,
     color:d.color,acc:d.acc,score:d.score,behavior:d.behavior,boss:!!d.boss,
     shootCd:d.shootCd||0, shootTimer:Math.random()*1.5, projSpeed:d.projSpeed||0,
     hitTimer:0, atkTimer:0, stun:0, bob:Math.random()*6.28,
@@ -668,7 +726,7 @@ function updateEnemies(dt){
           e.charging-=dt;
           e.x += e.facing * 260 * dt;
         } else if(e.chargeCd<=0 && dist<320 && dist>60){
-          e.charging=0.5; e.chargeCd=4;
+          e.charging=0.55; e.chargeCd=2.6;
           spawnHitText(e.x, e.y-e.h-14, '!', '#ff4466');
         } else {
           if(dist>44){ e.x+=Math.sign(dx)*e.spd*dt; e.y+=Math.sign(dy)*e.spd*0.5*dt; }
@@ -676,12 +734,18 @@ function updateEnemies(dt){
       } else if(e.behavior==='chase'){
         if(dist>44){ e.x+=Math.sign(dx)*e.spd*dt; e.y+=Math.sign(dy)*e.spd*0.5*dt; }
       } else if(e.behavior==='kite'){
-        // keep mid distance, shoot
-        if(dist<160){ e.x-=Math.sign(dx)*e.spd*dt; }
-        else if(dist>240){ e.x+=Math.sign(dx)*e.spd*dt; }
+        // Keep mid distance and shoot — but don't flee forever.
+        // Won't back past the left edge of the visible arena, so it can be cornered.
+        const leftBound = scrollX + 40;
+        if(dist<150 && e.x > leftBound + 20){
+          e.x-=Math.sign(dx)*e.spd*dt;       // back away only if there's room
+        } else if(dist>240){
+          e.x+=Math.sign(dx)*e.spd*dt;       // close in if too far
+        }
+        // if cornered (can't retreat and player is close), it stands and fights — vulnerable
         e.y+=Math.sign(dy)*e.spd*0.3*dt;
         e.shootTimer-=dt;
-        if(e.shootTimer<=0 && Math.abs(dy)<60 && sx>0 && sx<W){
+        if(e.shootTimer<=0 && Math.abs(dy)<70 && sx>0 && sx<W){
           e.shootTimer=e.shootCd;
           const dmg = e.atk*(e.debuff||1);
           projectiles.push({x:e.x,y:e.y-22,vx:Math.sign(dx)*e.projSpeed,vy:0,w:8,h:6,color:e.acc,dmg:dmg,life:2.5,friendly:false});
@@ -765,8 +829,20 @@ function updateProjectiles(dt){
 
 function updateWaves(dt){
   enemies=enemies.filter(e=>!e.dead);
-  const aliveNonDying = enemies.filter(e=>!e.dying).length;
-  if(aliveNonDying===0 && waveIndex<WAVES.length-1){
+  const alive = aliveCount();
+
+  // Feed reinforcements from the queue to keep pressure on
+  if(spawnQueue.length>0){
+    reinforceTimer-=dt;
+    if(alive < maxOnscreen && reinforceTimer<=0){
+      fillFromQueue(false);
+      reinforceTimer = 0.5; // small gap between reinforcement spawns
+    }
+    return; // wave not done while queue has enemies
+  }
+
+  // Queue empty AND screen clear -> advance to next wave
+  if(alive===0 && waveIndex<WAVES.length-1){
     waveClearTimer+=dt;
     if(waveClearTimer>1.2){
       waveClearTimer=0; waveIndex++;
