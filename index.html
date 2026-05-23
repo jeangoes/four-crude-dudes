@@ -169,7 +169,7 @@ const CHAR_DEFS = {
   DARIAN: {
     label:'DARIAN', archetype:'EVOKER OF HIGH SORCERY', role:'🔥 Glass cannon de fogo',
     hp:60, atk:14, spd:108, color:'#5C6BC0', accent:'#FF7043', sprite:'SPR_DARIAN',
-    attack: { kind:'projectile', cooldown:0.34, speed:420, range:720, dmg:1.1, count:1, w:14, h:10, color:'#FF8A50', knockback:50, pierce:0, ember:true },
+    attack: { kind:'projectile', cooldown:0.34, speed:420, range:720, dmg:1.1, count:1, w:14, h:10, color:'#FF8A50', knockback:50, pierce:0, ember:true, mpCost:14 },
     special: { kind:'fireball', cost:35, cooldown:1.2, speed:300, radius:80, dmg:1.7, knockback:220, color:'#FF5722', name:'FIREBALL' }
   },
   LATHURIEL: {
@@ -473,6 +473,11 @@ function doAttack(){
     if(p.ammo<=0){ p.reloading=p.def.reloadTime; return; }
     p.ammo--;
     if(p.ammo<=0) p.reloading=p.def.reloadTime;
+  }
+  // Mana gating for caster attacks (Darian) — can't spam, must let MP recover
+  if(a.mpCost){
+    if(p.mp < a.mpCost) return;
+    p.mp -= a.mpCost;
   }
   p.attackCd = a.cooldown; p.attackAnim=0.15;
   if(a.kind==='projectile'){
@@ -785,9 +790,13 @@ function updateHUD(){
   let comboTxt = combo>=2 ? combo+'x COMBO!' : '';
   if(player.def.attack.usesAmmo){
     const ammoTxt = player.reloading>0 ? 'RELOADING…' : '🏹'+player.ammo+'/'+player.maxAmmo;
-    comboTxt = comboTxt ? comboTxt : ammoTxt;
-    // show ammo always, combo when active
     document.getElementById('combo-display').textContent = combo>=2 ? combo+'x! '+ammoTxt : ammoTxt;
+    return;
+  }
+  if(player.def.attack.mpCost){
+    const lowMana = player.mp < player.def.attack.mpCost;
+    const manaTxt = lowMana ? 'LOW MANA!' : '';
+    document.getElementById('combo-display').textContent = combo>=2 ? combo+'x COMBO!' : manaTxt;
     return;
   }
   document.getElementById('combo-display').textContent = comboTxt;
