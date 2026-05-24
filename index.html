@@ -54,6 +54,7 @@
   .action-btn:active,.action-btn.pressed{transform:scale(0.9);opacity:0.7;}
   #btn-attack{background:rgba(192,57,43,0.3);border-color:#e74c3c;color:#ff6b6b;font-size:18px;}
   #btn-special{background:rgba(41,128,185,0.3);border-color:#2980b9;color:#74b9ff;font-size:18px;}
+  #btn-defense{background:rgba(120,220,140,0.25);border-color:#27ae60;color:#9CFF8A;font-size:18px;}
   #btn-jump{width:44px;height:44px;background:rgba(39,174,96,0.3);border-color:#27ae60;color:#2ecc71;font-size:7px;border-radius:8px;}
   #pause-btn{position:absolute;top:6px;right:10px;font-family:'Press Start 2P',monospace;font-size:10px;background:rgba(0,0,0,0.4);color:#aaa;border:1px solid #555;padding:4px 8px;cursor:pointer;z-index:10;}
   .overlay{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:50;background:rgba(0,0,0,0.92);padding:28px 40px;width:90%;max-width:320px;}
@@ -71,10 +72,10 @@
 <div id="title-screen">
   <h1>⚔ FOUR CRUDE DUDES ⚔</h1>
   <div class="subtitle">16-BIT ADVENTURE — SELECT YOUR HERO</div>
-  <div class="version">v2.2</div>
+  <div class="version">v2.3</div>
   <div class="char-select" id="char-select"></div>
   <button class="start-btn" onclick="startGame()">▶ START GAME</button>
-  <div id="keyboard-hint" style="font-size:7px;color:#444;margin-top:10px;">Arrows/WASD = Move &nbsp; Z = Attack &nbsp; X = Special &nbsp; P = Pause</div>
+  <div id="keyboard-hint" style="font-size:7px;color:#444;margin-top:10px;">Arrows/WASD = Move &nbsp; Space = Jump &nbsp; Z = Attack &nbsp; X = Special &nbsp; C = Defense &nbsp; P = Pause</div>
 </div>
 
 <div id="game-wrap">
@@ -111,10 +112,11 @@
     <div id="action-btns">
       <div id="action-btns-row">
         <div class="action-btn" id="btn-jump">JUMP</div>
+        <div class="action-btn" id="btn-defense">🛡</div>
         <div class="action-btn" id="btn-special">✨</div>
         <div class="action-btn" id="btn-attack">⚔</div>
       </div>
-      <div style="font-size:6px;color:#444;text-align:right;">⚔ ATK &nbsp;✨ SPECIAL &nbsp;JUMP</div>
+      <div style="font-size:6px;color:#444;text-align:right;">⚔ ATK &nbsp;✨ SP &nbsp;🛡 DEF &nbsp;JUMP</div>
     </div>
   </div>
 </div>
@@ -158,32 +160,36 @@ const CHAR_DEFS = {
     hp:70, atk:12, spd:125, color:'#8BC34A', accent:'#FF5722', sprite:'SPR_OWO',
     ammo:8, reloadTime:1.4, hasDash:true,
     attack: { kind:'projectile', cooldown:0.16, speed:460, range:680, dmg:1.0, count:1, w:18, h:5, color:'#FFE082', knockback:50, pierce:0, usesAmmo:true },
-    special: { kind:'hail', cost:30, cooldown:1.0, dmg:0.7, ticks:6, areaW:160, areaH:50, color:'#FFE082', knockback:30, name:'HAIL OF ARROWS' }
+    special: { kind:'hail', cost:30, cooldown:1.0, dmg:0.7, ticks:6, areaW:160, areaH:50, color:'#FFE082', knockback:30, name:'HAIL OF ARROWS' },
+    defense: { kind:'dodge', cost:25, cooldown:3.5, duration:0.9, color:'#B2FF59', name:'UNCANNY DODGE' }
   },
   ELANDRIN: {
     label:'ELANDRIN', archetype:'CLERIC OF PALADINE', role:'🛡 Tanque, dano sagrado em área',
     hp:140, atk:16, spd:92, color:'#78909C', accent:'#FFD54F', sprite:'SPR_ELANDRIN',
     attack: { kind:'melee', cooldown:0.40, reach:64, arc:56, dmg:1.0, knockback:150 },
-    special: { kind:'toll', cost:35, cooldown:1.2, dmg:1.0, woundedMult:2.0, color:'#FFD54F', name:'TOLL THE DEAD' }
+    special: { kind:'toll', cost:35, cooldown:1.2, dmg:1.0, woundedMult:2.0, color:'#FFD54F', name:'RADIANCE OF THE DAWN' },
+    defense: { kind:'heal', cost:40, cooldown:5.0, amount:0.35, color:'#FFE082', name:'CURE WOUNDS' }
   },
   DARIAN: {
     label:'DARIAN', archetype:'EVOKER OF HIGH SORCERY', role:'🔥 Glass cannon de fogo',
     hp:60, atk:14, spd:108, color:'#5C6BC0', accent:'#FF7043', sprite:'SPR_DARIAN',
     attack: { kind:'projectile', cooldown:0.34, speed:420, range:720, dmg:1.1, count:1, w:14, h:10, color:'#FF8A50', knockback:50, pierce:0, ember:true, mpCost:14 },
-    special: { kind:'fireball', cost:35, cooldown:1.2, speed:300, radius:80, dmg:1.7, knockback:220, color:'#FF5722', name:'FIREBALL' }
+    special: { kind:'fireball', cost:35, cooldown:1.2, speed:300, radius:80, dmg:1.7, knockback:220, color:'#FF5722', name:'FIREBALL' },
+    defense: { kind:'shield', cost:35, cooldown:5.0, duration:3.0, color:'#80DEEA', name:'SHIELD' }
   },
   LATHURIEL: {
     label:'LATHURIEL', archetype:'BARD / WARLOCK', role:'🎸 Versátil, debuff + homing',
     hp:100, atk:13, spd:108, color:'#4FC3F7', accent:'#B388FF', sprite:'SPR_LATHURIEL',
     attack: { kind:'melee', cooldown:0.32, reach:70, arc:74, dmg:0.85, knockback:80, multi:true, debuff:0.6, debuffTime:3.0 },
-    special: { kind:'eldritch', cost:35, cooldown:1.1, speed:300, dmg:1.0, count:3, w:14, h:14, color:'#B388FF', knockback:60, name:'ELDRITCH BLAST' }
+    special: { kind:'eldritch', cost:35, cooldown:1.1, speed:300, dmg:1.0, count:3, w:14, h:14, color:'#B388FF', knockback:60, name:'ELDRITCH BLAST' },
+    defense: { kind:'regen', cost:35, cooldown:5.0, amount:0.30, duration:3.0, color:'#80FFEA', name:'SONG OF REST' }
   }
 };
 
 // ---- ENEMY DEFINITIONS ----
 const ENEMY_DEFS = {
   grunt:  { hp:45, atk:7,  spd:90,  w:28, h:44, color:'#B71C1C', acc:'#FF5252', score:100, behavior:'chase' },
-  archer: { hp:28, atk:6,  spd:60,  w:22, h:40, color:'#4A148C', acc:'#CE93D8', score:150, behavior:'kite',  shootCd:0.95, projSpeed:280 },
+  archer: { hp:28, atk:6,  spd:60,  w:22, h:40, color:'#4A148C', acc:'#CE93D8', score:150, behavior:'kite',  shootCd:1.1, projSpeed:215 },
   knight: { hp:95, atk:15, spd:58,  w:32, h:48, color:'#37474F', acc:'#90A4AE', score:200, behavior:'guard' },
   boss:   { hp:420, atk:18, spd:66, w:54, h:70, color:'#880E4F', acc:'#F48FB1', score:1000, behavior:'chase', boss:true }
 };
@@ -238,6 +244,7 @@ function buildCharCards(){
         <div class="arch">${d.archetype}</div>
         <div class="stats">HP:${d.hp} ATK:${d.atk}<br>SPD:${(d.spd/25).toFixed(0)}</div>
         <div class="role">${d.role}</div>
+        <div class="role" style="color:#9CFF8A;">🛡 ${d.defense.name}</div>
       </div></div>`;
   }).join('');
 }
@@ -307,7 +314,7 @@ function setupTouchBtn(id,key){
 }
 setupTouchBtn('btn-up','ArrowUp'); setupTouchBtn('btn-down','ArrowDown');
 setupTouchBtn('btn-left','ArrowLeft'); setupTouchBtn('btn-right','ArrowRight');
-setupTouchBtn('btn-attack','z'); setupTouchBtn('btn-special','x'); setupTouchBtn('btn-jump','ArrowUp');
+setupTouchBtn('btn-attack','z'); setupTouchBtn('btn-special','x'); setupTouchBtn('btn-jump',' '); setupTouchBtn('btn-defense','c');
 function isTouchDevice(){ return ('ontouchstart' in window)||navigator.maxTouchPoints>0; }
 
 // ============ GAME STATE ============
@@ -316,11 +323,11 @@ let gameState = STATE.MENU;
 let selectedChar = 'ELANDRIN';
 
 let player, enemies, projectiles, particles, hitTexts;
-let scrollX, autoScrollX, waveIndex, waveClearTimer, bossRef;
+let scrollX, waveIndex, waveClearTimer, bossRef, clearScrollX;
 let score, kills, combo, comboTimer, hitStop, lives;
 let spawnQueue, maxOnscreen, reinforceTimer;
 
-const FLOOR_Y=230, FLOOR_MIN=180, FLOOR_MAX=250, AUTO_SCROLL=30; // px/sec
+const FLOOR_Y=230, FLOOR_MIN=150, FLOOR_MAX=300; // floor depth range
 
 function selectChar(name){
   selectedChar=name;
@@ -361,7 +368,7 @@ function startGame(){
 
 function initGame(){
   const def = CHAR_DEFS[selectedChar];
-  scrollX=0; autoScrollX=0; waveIndex=0; waveClearTimer=0; bossRef=null;
+  scrollX=0; waveIndex=0; waveClearTimer=0; bossRef=null; clearScrollX=null;
   score=0; kills=0; combo=0; comboTimer=0; hitStop=0; lives=3;
   spawnQueue=[]; maxOnscreen=MAX_ONSCREEN_BASE; reinforceTimer=0;
   enemies=[]; projectiles=[]; particles=[]; hitTexts=[];
@@ -374,7 +381,8 @@ function initGame(){
     attackCd:0, specialCd:0, hitTimer:0, invincible:0,
     bob:0, attackAnim:0,
     ammo: def.ammo||0, maxAmmo: def.ammo||0, reloading:0,
-    dashCd:0, dashTimer:0, jumpHeld:false
+    dashCd:0, dashTimer:0, jumpHeld:false, jumpBaseY:null,
+    defCd:0, shieldTimer:0, regenTimer:0, regenRate:0, defFlash:0
   };
 
   spawnWave(0);
@@ -436,6 +444,7 @@ function makeEnemy(type,x,y){
     hp:hp,maxHp:hp,atk:Math.round(d.atk*atkMul),spd:d.spd,w:d.w,h:d.h,
     color:d.color,acc:d.acc,score:d.score,behavior:d.behavior,boss:!!d.boss,
     shootCd:d.shootCd||0, shootTimer:Math.random()*1.5, projSpeed:d.projSpeed||0,
+    aiming:0, aimDir:1,
     hitTimer:0, atkTimer:0, stun:0, bob:Math.random()*6.28,
     dying:false, dyingTimer:0, vx:0,
     debuff:0, debuffTimer:0,
@@ -496,6 +505,14 @@ function killEnemy(e){
 
 function hurtPlayer(dmg){
   if(player.invincible>0) return;
+  // Active shield (Darian) absorbs the hit entirely
+  if(player.shieldTimer>0){
+    spawnParticles(player.x,player.y-30,'#80DEEA',6);
+    spawnHitText(player.x,player.y-70,'BLOCK','#80DEEA');
+    player.invincible=0.3;
+    SFX.hit();
+    return;
+  }
   player.hp -= dmg;
   player.hitTimer=0.2; player.invincible=0.6;
   hitStop=Math.max(hitStop,0.06);
@@ -616,42 +633,87 @@ function doSpecial(){
   }
 }
 
+function doDefense(){
+  const p=player, d=p.def.defense;
+  if(!d || p.defCd>0 || p.mp<d.cost) return;
+  p.defCd=d.cooldown; p.mp-=d.cost; p.defName=d.name; p.defFlash=1.0;
+  if(d.kind==='heal'){
+    p.hp=Math.min(p.maxHp, p.hp + p.maxHp*d.amount);
+    for(let i=0;i<14;i++){ const ang=Math.random()*6.28; particles.push({x:p.x+Math.cos(ang)*20,y:p.y-30+Math.sin(ang)*20,vx:Math.cos(ang)*40,vy:-60-Math.random()*40,color:d.color,size:3+Math.random()*3,life:0.6,maxLife:0.6}); }
+    spawnHitText(p.x, p.y-72, '+'+Math.round(p.maxHp*d.amount), '#9CFF8A');
+    SFX.magic();
+  } else if(d.kind==='shield'){
+    p.shieldTimer=d.duration;
+    SFX.magic();
+  } else if(d.kind==='regen'){
+    p.regenTimer=d.duration;
+    p.regenRate = (p.maxHp*d.amount)/d.duration; // total over duration
+    spawnHitText(p.x, p.y-72, '♪', d.color);
+    SFX.magic();
+  } else if(d.kind==='dodge'){
+    p.invincible=Math.max(p.invincible, d.duration);
+    SFX.arrow();
+  }
+}
+
 // ============ UPDATE ============
 function updatePlayer(dt){
   const p=player;
   const moveL=isKey('ArrowLeft','a','A'), moveR=isKey('ArrowRight','d','D');
   const moveU=isKey('ArrowUp','w','W'), moveD=isKey('ArrowDown','s','S');
+  const jumpKey=isKey(' ','Spacebar','Space');
+  const defKey=isKey('c','C');
   const spd=p.def.spd;
   p.walking=moveL||moveR||moveU||moveD;
 
   if(moveL){ p.x-=spd*dt; p.facing=-1; }
   if(moveR){ p.x+=spd*dt; p.facing=1; }
+  // Up/Down now ONLY move along the floor depth, at full speed
+  if(moveU && !p.jumping) p.y=Math.max(p.y-spd*dt, FLOOR_MIN);
+  if(moveD && !p.jumping) p.y=Math.min(p.y+spd*dt, FLOOR_MAX);
 
-  // Jump (with edge detection for Kender dash)
-  if(moveU && !p.jumpHeld){
-    if(!p.jumping){ p.vy=-340; p.jumping=true; }
-    // Kender dash: quick burst in facing direction if moving horizontally
-    if(p.def.hasDash && p.dashCd<=0 && (moveL||moveR)){
-      p.dashTimer=0.18; p.dashCd=0.8;
+  // Jump on dedicated key (Space / JUMP button)
+  if(jumpKey && !p.jumpHeld){
+    if(!p.jumping){
+      p.vy=-340; p.jumping=true; p.jumpBaseY=p.y;
+      // Kender dash: jump + a direction triggers a quick burst
+      if(p.def.hasDash && p.dashCd<=0 && (moveL||moveR)){
+        p.dashTimer=0.18; p.dashCd=0.8;
+      }
     }
   }
-  p.jumpHeld = moveU;
-  if(moveD&&!p.jumping) p.y=Math.min(p.y+spd*0.5*dt, FLOOR_MAX);
-  if(moveU&&p.y>FLOOR_MIN&&!p.jumping) p.y=Math.max(p.y-spd*0.5*dt, FLOOR_MIN);
+  p.jumpHeld = jumpKey;
+
+  // Defense ability (dedicated key/button)
+  if(p.defCd>0) p.defCd-=dt;
+  if(defKey && p.defCd<=0) doDefense();
+  if(p.shieldTimer>0) p.shieldTimer-=dt;
+  if(p.regenTimer>0){ p.regenTimer-=dt; p.hp=Math.min(p.maxHp, p.hp + p.regenRate*dt); }
 
   // dash movement
   if(p.dashCd>0) p.dashCd-=dt;
   if(p.dashTimer>0){ p.dashTimer-=dt; p.x += p.facing*420*dt; p.invincible=Math.max(p.invincible,0.05); }
 
-  autoScrollX += AUTO_SCROLL*dt;
-  p.x = Math.max(autoScrollX+50, Math.min(autoScrollX+W-50, p.x));
+  // No auto-scroll — the world only advances when the player walks forward.
+  // While a wave is unresolved the screen is "locked": the player is held back
+  // from the right edge so they must fight. When cleared, the lock releases and
+  // the player can walk to the edge, which scrolls the camera and triggers the
+  // next wave.
+  const waveLocked = (typeof spawnQueue!=='undefined' && spawnQueue.length>0) || aliveCount()>0;
+  const rightLimit = waveLocked ? (scrollX + W*0.78) : (scrollX + W - 50);
+  p.x = Math.max(scrollX+50, Math.min(rightLimit, p.x));
 
-  if(p.jumping){ p.vy+=900*dt; p.y+=p.vy*dt; if(p.y>=FLOOR_Y){ p.y=FLOOR_Y; p.jumping=false; p.vy=0; } }
+  // Jump arc: rise/fall relative to the floor depth the jump started from
+  if(p.jumping){
+    p.vy+=900*dt; p.y+=p.vy*dt;
+    const ground = p.jumpBaseY!=null ? p.jumpBaseY : FLOOR_Y;
+    if(p.y>=ground){ p.y=ground; p.jumping=false; p.vy=0; p.jumpBaseY=null; }
+  }
 
+  // Camera follows the player rightward only; never scrolls backward.
   const screenX=p.x-scrollX;
-  if(screenX>W*0.6) scrollX+=(screenX-W*0.6)*0.15;
-  if(screenX<W*0.3) scrollX=Math.max(autoScrollX,scrollX-(W*0.3-screenX)*0.15);
-  scrollX=Math.max(scrollX,autoScrollX);
+  if(screenX>W*0.5) scrollX += (screenX - W*0.5); // track 1:1 so forward walking always scrolls
+  if(scrollX<0) scrollX=0;
 
   // reload (ammo characters)
   if(p.reloading>0){ p.reloading-=dt; if(p.reloading<=0){ p.ammo=p.maxAmmo; } }
@@ -660,6 +722,7 @@ function updatePlayer(dt){
   if(p.specialCd>0) p.specialCd-=dt;
   if(p.attackAnim>0) p.attackAnim-=dt;
   if(p.specialFlash>0) p.specialFlash-=dt*1.5;
+  if(p.defFlash>0) p.defFlash-=dt*1.5;
   if(isKey('z','Z','j','J')&&p.attackCd<=0) doAttack();
   if(isKey('x','X','k','K')&&p.specialCd<=0) doSpecial();
 
@@ -735,20 +798,30 @@ function updateEnemies(dt){
         if(dist>44){ e.x+=Math.sign(dx)*e.spd*dt; e.y+=Math.sign(dy)*e.spd*0.5*dt; }
       } else if(e.behavior==='kite'){
         // Keep mid distance and shoot — but don't flee forever.
-        // Won't back past the left edge of the visible arena, so it can be cornered.
         const leftBound = scrollX + 40;
         if(dist<150 && e.x > leftBound + 20){
-          e.x-=Math.sign(dx)*e.spd*dt;       // back away only if there's room
+          e.x-=Math.sign(dx)*e.spd*dt;
         } else if(dist>240){
-          e.x+=Math.sign(dx)*e.spd*dt;       // close in if too far
+          e.x+=Math.sign(dx)*e.spd*dt;
         }
-        // if cornered (can't retreat and player is close), it stands and fights — vulnerable
         e.y+=Math.sign(dy)*e.spd*0.3*dt;
-        e.shootTimer-=dt;
-        if(e.shootTimer<=0 && Math.abs(dy)<70 && sx>0 && sx<W){
-          e.shootTimer=e.shootCd;
-          const dmg = e.atk*(e.debuff||1);
-          projectiles.push({x:e.x,y:e.y-22,vx:Math.sign(dx)*e.projSpeed,vy:0,w:8,h:6,color:e.acc,dmg:dmg,life:2.5,friendly:false});
+
+        // Telegraphed shot: wind up (aiming) before firing so the player can react
+        if(e.aiming>0){
+          e.aiming-=dt;
+          if(e.aiming<=0 && sx>0 && sx<W){
+            const dmg = e.atk*(e.debuff||1);
+            const dir = e.aimDir||Math.sign(dx)||1;
+            // bigger, slower, readable projectile
+            projectiles.push({x:e.x,y:e.y-22,vx:dir*e.projSpeed,vy:0,w:12,h:10,color:e.acc,dmg:dmg,life:3.0,friendly:false,telegraphed:true});
+            e.shootTimer=e.shootCd;
+          }
+        } else {
+          e.shootTimer-=dt;
+          if(e.shootTimer<=0 && Math.abs(dy)<70 && sx>0 && sx<W){
+            e.aiming=0.45;            // wind-up window
+            e.aimDir=Math.sign(dx)||1;
+          }
         }
       } else if(e.behavior==='guard'){
         // slow advance, harder to stagger
@@ -841,13 +914,19 @@ function updateWaves(dt){
     return; // wave not done while queue has enemies
   }
 
-  // Queue empty AND screen clear -> advance to next wave
+  // Queue empty AND screen clear -> let the player advance to trigger next wave.
+  // Record where the screen was when cleared; once the player walks forward a
+  // set distance from there (Streets of Rage style), the next wave begins.
   if(alive===0 && waveIndex<WAVES.length-1){
     waveClearTimer+=dt;
-    if(waveClearTimer>1.2){
-      waveClearTimer=0; waveIndex++;
+    if(clearScrollX===null) clearScrollX = scrollX;
+    const advanced = scrollX - clearScrollX;
+    if(waveClearTimer>0.4 && advanced > 80){
+      waveClearTimer=0; clearScrollX=null; waveIndex++;
       spawnWave(waveIndex);
     }
+  } else {
+    clearScrollX = null; // reset while fighting
   }
 }
 
@@ -894,6 +973,12 @@ function drawBackground(){
   ctx.fillStyle='#f5c518';ctx.font='7px "Press Start 2P",monospace';ctx.textAlign='center';
   const wlabel = waveIndex>=WAVES.length-1 ? 'BOSS' : 'WAVE '+(waveIndex+1)+'/'+(WAVES.length-1);
   ctx.fillText(wlabel,W/2,14);
+  // "GO →" prompt when screen is unlocked (wave cleared, advance to continue)
+  const cleared = (typeof spawnQueue==='undefined' || spawnQueue.length===0) && aliveCount()===0 && waveIndex<WAVES.length-1;
+  if(cleared){
+    const blink = Math.floor(performance.now()/300)%2===0;
+    if(blink){ ctx.fillStyle='#FFEB3B'; ctx.font='12px "Press Start 2P",monospace'; ctx.textAlign='right'; ctx.fillText('GO →', W-20, 40); }
+  }
 }
 
 function drawEnemy(e){
@@ -913,6 +998,11 @@ function drawEnemy(e){
   if(e.stun){ ctx.fillStyle='#FFD700'; ctx.font='8px monospace'; ctx.textAlign='center'; ctx.fillText('★',0,-e.h-6); }
   if(e.boss){ ctx.fillStyle=e.acc; ctx.fillRect(-e.w/2,-e.h-10,e.w,7); ctx.fillStyle='#FFD700'; ctx.font='6px "Press Start 2P",monospace'; ctx.textAlign='center'; ctx.fillText('BOSS',0,-e.h-3); }
   if(!e.dying && !e.boss){ const bw=e.w+8; ctx.fillStyle='#222'; ctx.fillRect(-bw/2,-e.h-12,bw,4); ctx.fillStyle=e.hp>e.maxHp*0.5?'#27ae60':'#e74c3c'; ctx.fillRect(-bw/2,-e.h-12,bw*Math.max(0,e.hp/e.maxHp),4); }
+  // aiming telegraph: blinking marker above + line toward target
+  if(e.aiming>0){
+    const blink = Math.floor(e.aiming*16)%2===0;
+    if(blink){ ctx.fillStyle='#FFEB3B'; ctx.font='10px "Press Start 2P",monospace'; ctx.textAlign='center'; ctx.fillText('!',0,-e.h-16); }
+  }
   ctx.restore();
 }
 
@@ -952,6 +1042,18 @@ function draw(){
       player.w, player.h, player.facing<0, player.hitTimer>0);
   }
 
+  // Shield bubble (Darian)
+  if(player.shieldTimer>0){
+    const cx=player.x-scrollX+player.w/2, cy=player.y-player.h/2;
+    ctx.strokeStyle='#80DEEA'; ctx.globalAlpha=0.4+0.3*Math.sin(player.shieldTimer*10); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(cx,cy,player.w*0.75,0,Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // Regen glow (Lathuriel Song of Rest)
+  if(player.regenTimer>0 && Math.random()<0.4){
+    particles.push({x:player.x+(Math.random()-0.5)*30, y:player.y-Math.random()*50, vx:0, vy:-40, color:'#80FFEA', size:3, life:0.5, maxLife:0.5});
+  }
+
   all.filter(e=>e.y>player.y).forEach(drawEnemy);
 
   // projectiles
@@ -985,6 +1087,13 @@ function draw(){
     ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(W/2-95,H/2-16,190,26);
     ctx.fillStyle=player.accent; ctx.font='9px "Press Start 2P",monospace'; ctx.textAlign='center';
     ctx.fillText((player.specialName||'')+'!',W/2,H/2+4);
+    ctx.globalAlpha=1;
+  }
+  if(player.defFlash>0){
+    ctx.globalAlpha=Math.min(1,player.defFlash);
+    ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(W/2-95,H/2+16,190,22);
+    ctx.fillStyle='#9CFF8A'; ctx.font='8px "Press Start 2P",monospace'; ctx.textAlign='center';
+    ctx.fillText((player.defName||''),W/2,H/2+31);
     ctx.globalAlpha=1;
   }
 }
