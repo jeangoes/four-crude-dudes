@@ -3,6 +3,9 @@
 // em linguagem direta ao jogador — sem teste, sem nome de função.
 
 export const CHANGELOG = [
+  { version: '4.0.6-dev', date: '2026-08-18', items: [
+    'Corrigido: a tela às vezes ficava presa numa versão antiga até você atualizar a página na força.',
+  ] },
   { version: '4.0.5-dev', date: '2026-08-18', items: [
     'Rajada Mística do Lathuriel agora dispara dois feixes a partir do nível 5, como na regra.',
   ] },

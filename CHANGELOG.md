@@ -2,6 +2,11 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-18 (correção: cache do GitHub Pages)
+
+### Corrigido
+- **A tela de "Novidades" (e qualquer mudança de código) só aparecia depois de Ctrl+R.** O navegador guarda `src/main.js` e `src/styles.css` em cache, e o GitHub Pages não manda header contra isso. `index.html` agora referencia os dois com `?v=<versão>`, atualizado a cada bump — a URL muda, o navegador busca de novo, sem exigir recarga forçada de quem joga.
+
 ## 2026-08-18 (correção: Rajada Mística)
 
 ### Corrigido

@@ -194,3 +194,5 @@ A sessão de batalha dá acesso a `encounter` (regras), `field` (grid) e `view` 
 A versão mostrada na tela de título (`VERSION` em `src/main.js`, espelhada em `package.json`) sobe de **patch a cada commit de bloco ou correção fechado** — não é decorativa, segue o histórico real do repo. O sufixo `-dev` continua enquanto a lista de "Pendências conhecidas" acima não zerar; sai só quando ela zerar.
 
 Toda vez que a versão sobe, o commit também acrescenta uma entrada em `src/data/changelog.js` — o changelog para quem joga, aberto pelo botão "Novidades" na tela de título. Esse arquivo usa linguagem direta ao jogador, sem jargão de dev; o histórico técnico completo, por bloco, continua neste `CHANGELOG.md`.
+
+**Cache do GitHub Pages:** o navegador guarda `src/main.js` e `src/styles.css` em cache, e o GitHub Pages não permite header customizado pra evitar isso. `index.html` referencia os dois com `?v=<versão>` (ex.: `src/main.js?v=4.0.5-dev`) — atualizar essa query junto com `VERSION` a cada bump é o que força o navegador a buscar de novo em vez de servir a cópia antiga sem precisar de Ctrl+R.
