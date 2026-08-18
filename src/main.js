@@ -18,7 +18,7 @@ import { interludioDe } from './data/interludes.js';
 import { renderSheet } from './ui/sheet.js';
 import * as Save from './game/save.js';
 
-export const VERSION = '4.0-dev';
+export const VERSION = '4.0.4-dev';
 
 const SCREENS = ['title', 'interlude', 'map', 'battle', 'dialogue'];
 

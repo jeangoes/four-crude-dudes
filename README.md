@@ -187,5 +187,10 @@ A sessão de batalha dá acesso a `encounter` (regras), `field` (grid) e `view` 
 ## Pendências conhecidas
 
 - **A ficha do Owo** é a única que ainda não existe em papel. O kit dela é um Patrulheiro padrão mais o que a campanha confirma, e se declara provisório na tela.
-- **Rajada Mística** do Lathuriel: do nível 5 em diante são dois feixes com jogadas separadas, e o motor ainda resolve uma só.
 - **Arte:** os inimigos são desenhados pelo motor enquanto não houver PNG pintado. Em ordem de prioridade: três poses novas por herói, retratos de diálogo, depois os inimigos.
+
+## Versão
+
+A versão mostrada na tela de título (`VERSION` em `src/main.js`, espelhada em `package.json`) sobe de **patch a cada commit de bloco ou correção fechado** — não é decorativa, segue o histórico real do repo. O sufixo `-dev` continua enquanto a lista de "Pendências conhecidas" acima não zerar; sai só quando ela zerar.
+
+Toda vez que a versão sobe, o commit também acrescenta uma entrada em `src/data/changelog.js` — o changelog para quem joga, aberto pelo botão "Novidades" na tela de título. Esse arquivo usa linguagem direta ao jogador, sem jargão de dev; o histórico técnico completo, por bloco, continua neste `CHANGELOG.md`.
