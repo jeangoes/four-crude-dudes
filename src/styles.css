@@ -490,3 +490,15 @@ body::before {
 .levelup-heroi li { color: var(--parchment-2); font-size: 0.95rem; padding-left: 1em; text-indent: -1em; }
 .levelup-heroi li::before { content: '▸ '; color: var(--gold); }
 .levelup-panel .btn { margin-top: 1.4rem; }
+
+/* ---------- novidades ---------- */
+
+.changelog-panel { max-width: 560px; }
+.changelog-entry { border-top: var(--edge); padding: 0.9rem 0; text-align: left; }
+.changelog-entry:first-of-type { border-top: none; padding-top: 0; }
+.changelog-entry h4 { font-family: var(--font-display); color: var(--gold-bright); }
+.changelog-date { font-family: var(--font-ui); font-size: 0.44rem; color: #8d8172; margin-left: 0.6em; }
+.changelog-entry ul { list-style: none; margin-top: 0.4rem; }
+.changelog-entry li { color: var(--parchment-2); font-size: 0.95rem; padding: 0.15rem 0 0.15rem 1em; text-indent: -1em; }
+.changelog-entry li::before { content: '▸ '; color: var(--gold); }
+.changelog-panel .btn { margin-top: 1.4rem; }

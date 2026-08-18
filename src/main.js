@@ -17,6 +17,7 @@ import { CAPITULOS } from './data/chapters.js';
 import { interludioDe } from './data/interludes.js';
 import { renderSheet } from './ui/sheet.js';
 import * as Save from './game/save.js';
+import { CHANGELOG } from './data/changelog.js';
 
 export const VERSION = '4.0.4-dev';
 
@@ -65,11 +66,31 @@ function wireAudioPanel() {
   document.getElementById('btn-audio-close').addEventListener('click', () => toggleOverlay('overlay-audio', false));
 }
 
+// ---------- novidades (changelog para quem joga) ----------
+
+function renderChangelog() {
+  const body = document.getElementById('changelog-body');
+  body.innerHTML = CHANGELOG.map(entry => `
+    <section class="changelog-entry">
+      <h4>v${entry.version} <span class="changelog-date">${entry.date}</span></h4>
+      <ul>${entry.items.map(i => `<li>${i}</li>`).join('')}</ul>
+    </section>
+  `).join('');
+}
+
+function wireChangelog() {
+  document.getElementById('btn-changelog').addEventListener('click', () => {
+    renderChangelog();
+    toggleOverlay('overlay-changelog', true);
+  });
+  document.getElementById('btn-changelog-close').addEventListener('click', () => toggleOverlay('overlay-changelog', false));
+}
+
 // ---------- menu de pausa ----------
 
 // Esc dentro do jogo abre a pausa. Fora dela, Esc so fecha o que estiver
 // aberto. Sem isto, quem entrou numa campanha nao tinha como sair.
-const OVERLAYS = ['overlay-reaction', 'overlay-levelup', 'overlay-audio', 'overlay-sheet', 'overlay-pause'];
+const OVERLAYS = ['overlay-reaction', 'overlay-levelup', 'overlay-audio', 'overlay-sheet', 'overlay-pause', 'overlay-changelog'];
 
 function overlayAberto() {
   return OVERLAYS.find(id => !document.getElementById(id)?.hidden) || null;
@@ -163,6 +184,7 @@ async function boot() {
 
   attachKeyboard();
   wireAudioPanel();
+  wireChangelog();
   wireLog();
   wirePausa();
 
