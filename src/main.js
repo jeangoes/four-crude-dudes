@@ -183,6 +183,10 @@ async function boot() {
       // A janela de reacao e a de evolucao exigem escolha: nao fecham no Esc.
       if (aberto === 'overlay-reaction' || aberto === 'overlay-levelup') return;
       if (aberto) { toggleOverlay(aberto, false); return; }
+      // A batalha tem prioridade: dentro dela, Esc volta um passo do menu
+      // antes de significar "pausar".
+      const batalha = game.campaign?.session || game.session;
+      if (batalha?.escVolta()) return;
       if (game.screen !== 'title') abrirPausa();
     }
   });

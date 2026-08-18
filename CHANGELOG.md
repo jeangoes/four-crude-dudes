@@ -2,6 +2,17 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-17 (correção de toque)
+
+### Corrigido
+- **No celular não dava para voltar do menu de magias.** Três causas somadas, encontradas jogando: cada linha de comando tinha 31 px de altura, abaixo do mínimo confortável de 44 px para dedo; o "← Voltar" ficava colado na última magia, sem separação, dentro da mesma lista rolável; e quem errava o dedo e caía em modo de mira não tinha saída, porque o Esc passou a abrir a pausa em vez de voltar.
+  - "Voltar" e "Cancelar" saíram da lista rolável para uma linha fixa, separada por régua e sempre visível.
+  - Em ponteiro grosso, cada linha de comando e cada escolha de diálogo passou a ter no mínimo 44 px.
+  - **Esc agora tem dono.** Dentro da batalha ele volta um passo (sai da mira, sai do submenu) antes de significar pausa. A batalha é consultada primeiro; a pausa só abre quando não há passo para desfazer.
+
+### Alterado
+- README reescrito para descrever o jogo como ele é hoje: campanha, progressão, combate, os draconianos, os encontros que não se vencem no braço, e as pendências conhecidas.
+
 ## 2026-08-17 (bloco 7)
 
 ### Adicionado

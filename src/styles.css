@@ -263,8 +263,19 @@ body::before {
 .pc-meta { font-family: var(--font-ui); font-size: 0.4rem; color: #8d8172; }
 
 .command-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.5rem; min-height: 0; }
-.command-list { list-style: none; overflow-y: auto; max-height: 26vh; }
-.command-list li {
+.command-column { display: flex; flex-direction: column; min-height: 0; }
+.command-list { list-style: none; overflow-y: auto; max-height: 26vh; flex: 1; }
+
+/* Linha fixa de voltar: fora da rolagem e separada por uma régua, para o
+   dedo não acertar o último comando da lista no lugar dela. */
+.command-back { list-style: none; flex-shrink: 0; }
+.command-back:not(:empty) {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: var(--edge);
+}
+
+.command-list li, .command-back li {
   font-family: var(--font-display);
   font-size: 0.92rem;
   letter-spacing: 0.04em;
@@ -273,13 +284,29 @@ body::before {
   cursor: pointer;
   color: var(--parchment-2);
 }
-.command-list li:hover, .command-list li.is-selected {
+.command-list li:hover, .command-list li.is-selected,
+.command-back li:hover, .command-back li.is-selected {
   border-left-color: var(--gold-bright);
   background: rgba(201, 162, 39, 0.09);
   color: var(--gold-bright);
 }
 .command-list li.is-disabled { opacity: 0.32; cursor: not-allowed; }
-.command-list li .cmd-cost { float: right; font-family: var(--font-ui); font-size: 0.42rem; color: var(--slot); }
+.command-list li .cmd-cost, .command-back li .cmd-cost {
+  float: right; font-family: var(--font-ui); font-size: 0.42rem; color: var(--slot);
+}
+
+/* Alvo de toque. Numa tela de dedo, 31px de altura faz errar o comando ao
+   lado; o mínimo confortável é 44. */
+@media (hover: none), (pointer: coarse) {
+  .command-list li, .command-back li {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .command-list li .cmd-cost, .command-back li .cmd-cost { float: none; margin-left: auto; }
+  .dialogue-choices li { min-height: 44px; display: flex; align-items: center; }
+}
 .command-detail {
   border-left: var(--edge);
   padding-left: 0.7rem;
@@ -383,8 +410,9 @@ body::before {
 @media (max-width: 780px) {
   .battle-bottom { grid-template-columns: 1fr; }
   .command-panel { grid-template-columns: 1fr; }
-  .command-detail { border-left: none; border-top: var(--edge); padding-left: 0; padding-top: 0.6rem; max-height: 18vh; }
-  .command-list { max-height: 20vh; }
+  .command-detail { border-left: none; border-top: var(--edge); padding-left: 0; padding-top: 0.6rem; max-height: 14vh; }
+  /* Espaço maior porque cada linha passou a ter 44px de altura. */
+  .command-list { max-height: 30vh; }
   .dialogue-stage { flex-direction: column; align-items: stretch; }
   .dialogue-portrait { align-self: center; }
 }

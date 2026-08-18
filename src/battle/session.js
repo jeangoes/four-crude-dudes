@@ -44,6 +44,7 @@ export class BattleSession {
 
     this.mode = MODE.IDLE;
     this.pending = null;          // comando aguardando alvo
+    this.submenu = null;          // 'magia' | 'talentos' | null
     this.reachMap = null;
     this.running = false;
     this.detachers = [];
@@ -236,6 +237,7 @@ export class BattleSession {
   openCommandMenu(actor) {
     this.mode = MODE.COMMAND;
     this.pending = null;
+    this.submenu = null;
     this.view.clearOverlays();
 
     const melee = (actor.sb.actions || []).filter(a => a.kind === 'melee' || a.kind === 'ranged');
@@ -316,6 +318,7 @@ export class BattleSession {
   }
 
   openSpellMenu(actor) {
+    this.submenu = 'magia';
     const spells = kitDisponivel(actor).spells;
     const commands = spells.map(spell => {
       const check = canCast(actor, spell);
@@ -351,6 +354,7 @@ export class BattleSession {
   }
 
   openTalentMenu(actor) {
+    this.submenu = 'talentos';
     const commands = kitDisponivel(actor).talents.map(talent => {
       const restante = talent.resource ? actor.resourceLeft(talent.resource) : null;
       const alvos = this.targetsFor(actor, talent);
@@ -476,6 +480,25 @@ export class BattleSession {
     this.openCommandMenu(actor);
   }
 
+  // O Esc tem dono. Quando a batalha esta no meio de escolher alvo, de
+  // mover, ou dentro de um submenu, ele volta um passo em vez de abrir a
+  // pausa. Quem escuta o teclado consulta isto antes de decidir.
+  escVolta() {
+    if (!this.running || this.encounter.finished) return false;
+    if (this.mode === MODE.TARGET || this.mode === MODE.MOVE) {
+      SFX.cancel();
+      this.view.clearOverlays();
+      this.openCommandMenu(this.encounter.current);
+      return true;
+    }
+    if (this.mode === MODE.COMMAND && this.submenu) {
+      SFX.cancel();
+      this.openCommandMenu(this.encounter.current);
+      return true;
+    }
+    return false;
+  }
+
   // ---------- entrada ----------
 
   bindInput() {
@@ -502,11 +525,8 @@ export class BattleSession {
       if (action === 'up') this.hud.move(-1);
       if (action === 'down') this.hud.move(1);
       if (action === 'confirm') this.hud.confirm();
-      if (action === 'cancel' && (this.mode === MODE.TARGET || this.mode === MODE.MOVE)) {
-        SFX.cancel();
-        this.view.clearOverlays();
-        this.openCommandMenu(this.encounter.current);
-      }
+      // O Esc e resolvido em main.js, que consulta escVolta() antes de
+      // abrir a pausa. Deixar os dois tratarem abriria a pausa por cima.
     }));
   }
 

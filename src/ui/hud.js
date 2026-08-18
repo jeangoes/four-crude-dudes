@@ -4,16 +4,22 @@
 
 const el = id => document.getElementById(id);
 
+// Comandos que levam de volta, e por isso nunca podem ficar escondidos ou
+// colados no item anterior.
+const ehVoltar = cmd => cmd.id === 'voltar' || cmd.id === 'cancelar' || cmd.voltar === true;
+
 export class BattleHUD {
   constructor() {
     this.initiative = el('initiative-track');
     this.roundNumber = el('round-number');
     this.partyBar = el('party-bar');
     this.commandList = el('command-list');
+    this.commandBack = el('command-back');
     this.commandDetail = el('command-detail');
     this.banner = el('battle-banner');
     this.selected = 0;
     this.commands = [];
+    this.itens = [];
     this.onPick = null;
   }
 
@@ -75,33 +81,49 @@ export class BattleHUD {
   renderCommands(commands, onPick) {
     this.commands = commands;
     this.onPick = onPick;
-    this.selected = commands.findIndex(c => !c.disabled);
-    if (this.selected < 0) this.selected = 0;
 
     this.commandList.innerHTML = '';
+    this.commandBack.innerHTML = '';
+    this.itens = [];
+
     commands.forEach((cmd, i) => {
       const li = document.createElement('li');
-      li.className = (cmd.disabled ? 'is-disabled ' : '') + (i === this.selected ? 'is-selected' : '');
+      li.className = cmd.disabled ? 'is-disabled' : '';
       li.innerHTML = `${cmd.label}${cmd.cost ? `<span class="cmd-cost">${cmd.cost}</span>` : ''}`;
       li.addEventListener('mouseenter', () => this.select(i));
       li.addEventListener('click', () => this.confirm(i));
-      this.commandList.appendChild(li);
+      // Voltar e cancelar saem da lista rolavel e ficam numa linha fixa,
+      // separada. Encostado na ultima magia, o dedo erra e entra em mira
+      // sem querer, e o caminho de volta some.
+      (ehVoltar(cmd) ? this.commandBack : this.commandList).appendChild(li);
+      this.itens.push(li);
     });
+
+    this.selected = commands.findIndex(c => !c.disabled);
+    if (this.selected < 0) this.selected = 0;
+    this.pintar();
     this.showDetail(commands[this.selected]);
   }
 
   clearCommands() {
     this.commands = [];
+    this.itens = [];
     this.onPick = null;
     this.commandList.innerHTML = '';
+    this.commandBack.innerHTML = '';
     this.commandDetail.innerHTML = '';
+  }
+
+  pintar() {
+    (this.itens || []).forEach((li, i) => li.classList.toggle('is-selected', i === this.selected));
   }
 
   select(i) {
     if (!this.commands.length) return;
     this.selected = (i + this.commands.length) % this.commands.length;
-    [...this.commandList.children].forEach((li, n) =>
-      li.classList.toggle('is-selected', n === this.selected));
+    this.pintar();
+    // Mantem o item escolhido a vista quando a lista rola.
+    this.itens[this.selected]?.scrollIntoView({ block: 'nearest' });
     this.showDetail(this.commands[this.selected]);
   }
 
