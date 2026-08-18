@@ -2,6 +2,18 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-18 (correção: Rajada Mística)
+
+### Corrigido
+- **Rajada Mística resolvia só um feixe a partir do nível 5.** A magia é truque (nível 0), e por isso passava pelo escalonamento normal de truque (`cantripDice`), que dobra o **dado** de dano por nível de personagem — certo para Raio de Fogo, errado aqui, porque a regra pede dobrar o **número de ataques**. Novo campo `beams: true` na ficha da magia (`src/data/heroes.js`) e nova função `beamsFor` (`src/rules/spells.js`) resolvem `beamCount` jogadas de ataque independentes, cada uma com seu próprio d20 e seu próprio 1d10+4, sem tocar no dado por feixe. `tests/rules.test.js`, 2 testes novos. Total do projeto: 155.
+- A "Explosão Repelente" (empurra 3 m) citada na descrição da magia continua sem mecânica implementada — lacuna própria, não faz parte deste fix.
+
+## 2026-08-18 (versão e novidades)
+
+### Adicionado
+- **Tela de "Novidades"** na tela de título: sobreposição no mesmo padrão de `overlay-audio`/`overlay-pause`, com o histórico de versões em `src/data/changelog.js`, em linguagem direta ao jogador — o espelho, para quem joga, deste changelog.
+- **Versionamento vinculado ao histórico real de commits.** A versão da tela de título (parada em "4.0-dev" desde o pivô) agora sobe de patch a cada bloco/correção fechado, com sufixo `-dev` até a lista de pendências conhecidas do README zerar. Reconstruída retroativamente: pivô (blocos 1-5) = 4.0.0-dev, bloco 6 = 4.0.1-dev, bloco 7 = 4.0.2-dev, correção de toque = 4.0.3-dev, bloco 8 = 4.0.4-dev.
+
 ## 2026-08-17 (bloco 8)
 
 ### Adicionado

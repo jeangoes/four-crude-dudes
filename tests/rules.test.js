@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import * as Dice from '../src/rules/dice.js';
 import { defineStatblock, Combatant } from '../src/rules/statblock.js';
 import { Encounter } from '../src/rules/combat.js';
-import { castSpell, canCast, damageAt, cantripDice } from '../src/rules/spells.js';
+import { castSpell, canCast, damageAt, cantripDice, beamsFor } from '../src/rules/spells.js';
 
 // `die(sides)` faz floor(rng()*sides)+1. Esta fracao faz o dado cair
 // exatamente em `value`, seja qual for o numero de faces.
@@ -197,6 +197,44 @@ describe('magia', () => {
     assert.equal(cantripDice(firebolt, 5), '2d10');
     assert.equal(cantripDice(firebolt, 11), '3d10');
     assert.equal(cantripDice(firebolt, 17), '4d10');
+  });
+
+  describe('Rajada Mistica: feixes em vez de dado dobrado', () => {
+    const rajada = {
+      id: 'rajada', name: 'Rajada Mística', level: 0, school: 'evocacao',
+      attack: true, beams: true, damage: { dice: '1d10+4', type: 'energia' },
+    };
+
+    function makeConjurador(level) {
+      return new Combatant(defineStatblock({
+        id: 'lathuriel', name: 'Lathuriel', level, side: 'ally',
+        abilities: { for: 10, des: 14, con: 14, int: 10, sab: 10, car: 19 },
+        ac: 20, maxHp: 67, speed: 9,
+        spellcasting: { ability: 'car', slots: {} },
+      }), { side: 'ally' });
+    }
+
+    test('beamsFor devolve 1 feixe abaixo do nivel 5 e 2 a partir dele', () => {
+      assert.equal(beamsFor(rajada, 4), 1);
+      assert.equal(beamsFor(rajada, 5), 2);
+      assert.equal(beamsFor(rajada, 11), 3);
+    });
+
+    test('no nivel 4 rola um ataque; no nivel 5, dois, cada um com seu 1d10+4', () => {
+      // d20(15) acerta a CA 15 do baaz sem virar critico; d10 sai 8, entao
+      // cada feixe causa 8+4 = 12, sem dado dobrado.
+      Dice.setRng(() => frac(15, 20));
+
+      const baixo = castSpell(makeConjurador(4), rajada, [makeBaaz()]);
+      assert.equal(baixo.events.filter(e => e.type === 'attack-roll').length, 1);
+      assert.deepEqual(baixo.events.filter(e => e.type === 'damage').map(e => e.amount), [12]);
+
+      const alto = castSpell(makeConjurador(5), rajada, [makeBaaz()]);
+      assert.equal(alto.events.filter(e => e.type === 'attack-roll').length, 2);
+      assert.deepEqual(alto.events.filter(e => e.type === 'damage').map(e => e.amount), [12, 12]);
+
+      Dice.resetRng();
+    });
   });
 
   test('sem espaco disponivel a magia nao sai', () => {

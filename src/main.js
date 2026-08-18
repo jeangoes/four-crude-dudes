@@ -19,7 +19,7 @@ import { renderSheet } from './ui/sheet.js';
 import * as Save from './game/save.js';
 import { CHANGELOG } from './data/changelog.js';
 
-export const VERSION = '4.0.4-dev';
+export const VERSION = '4.0.5-dev';
 
 const SCREENS = ['title', 'interlude', 'map', 'battle', 'dialogue'];
 

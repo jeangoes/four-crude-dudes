@@ -55,12 +55,24 @@ export function damageAt(spell, slotLevel) {
   return `${base}+${extra}${spell.damage.perLevel}`;
 }
 
+// Limiares de nivel de personagem que escalam truques (1/5/11/17).
+function cantripSteps(casterLevel) {
+  return casterLevel >= 17 ? 4 : casterLevel >= 11 ? 3 : casterLevel >= 5 ? 2 : 1;
+}
+
 // Truque escala por nivel de personagem, nao por espaco.
 export function cantripDice(spell, casterLevel) {
   if (spell.level !== 0 || !spell.damage) return null;
-  const steps = casterLevel >= 17 ? 4 : casterLevel >= 11 ? 3 : casterLevel >= 5 ? 2 : 1;
+  const steps = cantripSteps(casterLevel);
   const { count, sides, flat = '' } = parseCantrip(spell.damage.dice);
   return `${count * steps}d${sides}${flat}`;
+}
+
+// Magias como Rajada Mistica escalam em numero de feixes, nao em dado por
+// feixe: mesmos limiares de nivel do truque comum, mas cada feixe rola seu
+// proprio ataque e seu proprio dano fixo.
+export function beamsFor(spell, casterLevel) {
+  return spell.beams ? cantripSteps(casterLevel) : 1;
 }
 
 function parseCantrip(notation) {
@@ -130,9 +142,12 @@ export function castSpell(caster, spell, targets = [], options = {}) {
     }
   }
 
-  const notation = spell.level === 0
-    ? cantripDice(spell, caster.level)
-    : damageAt(spell, slotLevel);
+  const notation = spell.beams
+    ? spell.damage?.dice
+    : spell.level === 0
+      ? cantripDice(spell, caster.level)
+      : damageAt(spell, slotLevel);
+  const beamCount = beamsFor(spell, caster.level);
 
   for (const target of targets) {
     if (spared.has(target.id)) {
@@ -143,7 +158,7 @@ export function castSpell(caster, spell, targets = [], options = {}) {
       });
       continue;
     }
-    events.push(...resolveOnTarget(caster, spell, target, notation, slotLevel));
+    events.push(...resolveOnTarget(caster, spell, target, notation, slotLevel, beamCount));
   }
 
   if (spell.selfEffect) events.push(...applySelfEffect(caster, spell));
@@ -151,25 +166,28 @@ export function castSpell(caster, spell, targets = [], options = {}) {
   return { ok: true, events, slotLevel, slotUsed };
 }
 
-function resolveOnTarget(caster, spell, target, notation, slotLevel) {
+function resolveOnTarget(caster, spell, target, notation, slotLevel, beamCount = 1) {
   const events = [];
 
   // --- magia de ataque ---
   if (spell.attack) {
-    const roll = attackRoll({
-      mod: caster.spellAttack,
-      ac: target.ac,
-      advantage: spell.advantage,
-    });
-    events.push({
-      type: 'attack-roll',
-      caster: caster.id, target: target.id,
-      hit: roll.hit, crit: roll.critHit, roll,
-      text: `${caster.name} → ${target.name}: ${describe(roll)} vs CA ${target.ac} — ${roll.critHit ? 'crítico!' : roll.hit ? 'acerta' : 'erra'}`,
-    });
-    if (roll.hit && notation) {
-      const dmg = rollNotation(notation, { crit: roll.critHit });
-      events.push(...dealDamage(caster, target, dmg, spell.damage.type, describe(dmg)));
+    for (let i = 1; i <= beamCount; i++) {
+      const roll = attackRoll({
+        mod: caster.spellAttack,
+        ac: target.ac,
+        advantage: spell.advantage,
+      });
+      const feixe = beamCount > 1 ? ` (feixe ${i}/${beamCount})` : '';
+      events.push({
+        type: 'attack-roll',
+        caster: caster.id, target: target.id,
+        hit: roll.hit, crit: roll.critHit, roll, beam: i, beams: beamCount,
+        text: `${caster.name} → ${target.name}${feixe}: ${describe(roll)} vs CA ${target.ac} — ${roll.critHit ? 'crítico!' : roll.hit ? 'acerta' : 'erra'}`,
+      });
+      if (roll.hit && notation) {
+        const dmg = rollNotation(notation, { crit: roll.critHit });
+        events.push(...dealDamage(caster, target, dmg, spell.damage.type, describe(dmg)));
+      }
     }
     return events;
   }

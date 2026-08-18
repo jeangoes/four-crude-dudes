@@ -77,11 +77,9 @@ export const SPELLS = {
 
   rajadaMistica: {
     id: 'rajadaMistica', name: 'Rajada Mística', level: 0, school: 'evocacao',
-    castTime: 'acao', range: 36, attack: true, color: '#b388ff',
+    castTime: 'acao', range: 36, attack: true, beams: true, color: '#b388ff',
     damage: { dice: '1d10+4', type: 'energia' },
-    // TODO(bloco 4): a partir do nível 5 são dois feixes com jogadas
-    // separadas. Hoje o motor resolve uma jogada só.
-    detail: 'Rajada com Explosão Agonizante e Explosão Repelente (empurra 3 m).',
+    detail: 'Rajada com Explosão Agonizante e Explosão Repelente (empurra 3 m). Dois feixes a partir do nível 5.',
   },
   sussurrosDissonantes: {
     id: 'sussurrosDissonantes', name: 'Sussurros Dissonantes', level: 1, school: 'encantamento',

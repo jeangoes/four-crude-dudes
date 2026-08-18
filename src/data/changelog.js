@@ -3,6 +3,9 @@
 // em linguagem direta ao jogador — sem teste, sem nome de função.
 
 export const CHANGELOG = [
+  { version: '4.0.5-dev', date: '2026-08-18', items: [
+    'Rajada Mística do Lathuriel agora dispara dois feixes a partir do nível 5, como na regra.',
+  ] },
   { version: '4.0.4-dev', date: '2026-08-17', items: [
     'O progresso da campanha agora é salvo sozinho, entre um nó e outro do mapa.',
     'A tela de título mostra onde o grupo parou, e o botão Continuar retoma exatamente ali.',
