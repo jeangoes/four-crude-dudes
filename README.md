@@ -30,12 +30,15 @@ Publicado em `https://jeangoes.github.io/four-crude-dudes/`.
 | I | Abrir ficha |
 | L | Abrir log de combate |
 | M | Mudo |
+| Esc | Menu de pausa (sair, ficha, log, áudio) |
 
 No celular, toque no campo para escolher quadrado e nos itens de menu para confirmar.
 
 ## O que tem dentro
 
 Cinco capítulos que seguem o arco que a mesa jogou de verdade: a Fuga de Vogler, as Catacumbas de Kalaman, a Infiltração, a Descida e a Cidade Soterrada. Cada um é um mapa de nós com combate, diálogo, descanso e decisão.
+
+O grupo começa no **nível 1** em Vogler, como na aventura publicada, e chega ao **nível 8** na Ponte, que é onde a mesa está hoje. Sobe de nível ao fechar cada capítulo. O kit vem junto: Bola de Fogo e Contramágica só existem a partir do quinto nível, e Esculpir Magias, que faz o Darian acertar o próprio bardo sem queimá-lo, aparece no segundo.
 
 O combate é D&D 5e para valer, em grid de 12x8 quadrados de 1,5 m. Iniciativa, ação e ação bônus, reação, espaços de magia com upcast, concentração, vantagem e desvantagem. O log mostra cada rolagem por extenso, do jeito que a mesa reconhece:
 

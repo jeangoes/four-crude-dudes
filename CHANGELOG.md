@@ -2,6 +2,23 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-17 (bloco 7)
+
+### Adicionado
+- **Progressão de nível.** O grupo começa no nível 1 em Vogler, como na aventura publicada, e chega ao 8 na Ponte, que é o nível da mesa hoje. A curva é 1 → 3 → 4 → 5 → 6 → 8, por marco ao fechar o capítulo.
+- **O kit agora é descoberta.** Cada magia, talento e reação declara em que nível entra, e o menu só mostra o que já existe. Bola de Fogo e Contramágica chegam juntas no 5, com o espaço de 3º nível. Esculpir Magias chega no 2, Truque Potente no 6, Canalizar Divindade no 3. Lathuriel luta de rapieira com Destreza até o mergulho em Bruxo no nível 2, quando a espada do pacto passa a usar Carisma.
+- **Tabelas de nível explícitas por herói** (`src/data/progressoes.js`), uma linha por nível. O último nível de cada tabela bate exatamente com a ficha da mesa: Darian CA 17 e 66 PV no 8, Elandrin CA 21 e 71 PV no 7, e assim por diante. Tabela explícita erra menos que fórmula genérica de multiclasse.
+- **Tela de evolução** ao subir de nível, mostrando PV, CA, proficiência e o que cada um passou a ter.
+- **Menu de pausa no Esc**, com voltar ao jogo, ficha do grupo, log, áudio e sair para o início. Esc fecha o que estiver aberto antes de abrir a pausa, e não fecha a janela de reação nem a de evolução, que exigem escolha. Sair avisa que a campanha em andamento se perde, porque ainda não há save.
+- **Inimigos acompanham a curva.** Encontros redosados por capítulo (o primeiro nó de Vogler tem dois baaz, não três) e variante `veterano`, declarada com o sufixo `+` na lista do capítulo: mais PV, mais CA e um dado a mais na arma, para reusar baaz e kapak lá na frente sem que virem piada.
+- Pular direto para um capítulo entra no nível certo, com o kit de lá.
+- `tests/progressao.test.js`, 28 testes. Verificam que cada herói termina exatamente na ficha, que PV e CA nunca caem ao subir, que o gasto de espaço sobrevive ao nível novo, e que a dificuldade cresce entre capítulos. Total do projeto: 145.
+
+### Corrigido
+- **As fichas eram compartilhadas entre instâncias.** `Combatant` guardava a referência do molde em `data/`, e subir de nível escrevia nele. Terminar uma campanha deixaria o molde no nível 8, e a campanha seguinte começaria ali. Agora cada combatente copia a própria ficha.
+- `aplicarNivel` somava à tabela de espaços montada pelo construtor em vez de substituí-la, o que dava ao Darian de nível 1 os espaços de 4º nível da ficha.
+- Nomes de recurso apareciam em código (`canalizarDivindade`) na tela de evolução e na ficha.
+
 ## 2026-08-17 (bloco 6)
 
 ### Adicionado

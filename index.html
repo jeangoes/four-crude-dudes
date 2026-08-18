@@ -99,6 +99,30 @@
     <div class="reaction-actions" id="reaction-actions"></div>
   </div>
 </div>
+<div class="overlay" id="overlay-levelup" hidden>
+  <div class="overlay-panel levelup-panel">
+    <h3 id="levelup-title">Nível</h3>
+    <p class="levelup-sub" id="levelup-sub"></p>
+    <div id="levelup-body"></div>
+    <button class="btn btn-primary" id="btn-levelup-close">Seguir</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-pause" hidden>
+  <div class="overlay-panel pause-panel">
+    <h3>Pausa</h3>
+    <p class="pause-where" id="pause-where"></p>
+    <div class="pause-actions">
+      <button class="btn btn-primary" id="btn-pause-resume">Voltar ao jogo</button>
+      <button class="btn" id="btn-pause-sheet">Ficha do grupo</button>
+      <button class="btn" id="btn-pause-log">Log de combate</button>
+      <button class="btn" id="btn-pause-audio">Áudio</button>
+      <button class="btn btn-ghost" id="btn-pause-title">Sair para o início</button>
+    </div>
+    <p class="pause-hint">Esc fecha · I abre a ficha · L abre o log · M muda o som</p>
+  </div>
+</div>
+
 <div class="overlay" id="overlay-audio" hidden>
   <div class="overlay-panel">
     <h3>Áudio</h3>

@@ -433,3 +433,25 @@ body::before {
   .ficha-linhas { grid-template-columns: 1fr; gap: 0 0; }
   .ficha-linhas dd { margin-bottom: 0.4rem; }
 }
+
+/* ---------- pausa e evolução ---------- */
+
+.pause-panel { max-width: 420px; text-align: center; }
+.pause-where { color: var(--parchment-2); font-style: italic; margin-bottom: 1.4rem; }
+.pause-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+.pause-hint { margin-top: 1.4rem; font-size: 0.88rem; color: #6f6455; font-style: italic; }
+
+.levelup-panel { max-width: 560px; border-color: var(--gold-bright); }
+.levelup-panel h3 {
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  text-shadow: 0 0 22px rgba(201, 162, 39, 0.45);
+}
+.levelup-sub { color: var(--parchment-2); font-style: italic; margin-bottom: 1.2rem; }
+.levelup-heroi { border-top: var(--edge); padding: 0.7rem 0; text-align: left; }
+.levelup-heroi:first-of-type { border-top: none; }
+.levelup-heroi b { font-family: var(--font-display); color: var(--gold-bright); }
+.levelup-heroi .numeros { font-family: var(--font-ui); font-size: 0.44rem; color: #8d8172; margin-left: 0.6em; }
+.levelup-heroi ul { list-style: none; margin-top: 0.35rem; }
+.levelup-heroi li { color: var(--parchment-2); font-size: 0.95rem; padding-left: 1em; text-indent: -1em; }
+.levelup-heroi li::before { content: '▸ '; color: var(--gold); }
+.levelup-panel .btn { margin-top: 1.4rem; }

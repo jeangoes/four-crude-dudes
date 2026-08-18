@@ -64,6 +64,76 @@ function wireAudioPanel() {
   document.getElementById('btn-audio-close').addEventListener('click', () => toggleOverlay('overlay-audio', false));
 }
 
+// ---------- menu de pausa ----------
+
+// Esc dentro do jogo abre a pausa. Fora dela, Esc so fecha o que estiver
+// aberto. Sem isto, quem entrou numa campanha nao tinha como sair.
+const OVERLAYS = ['overlay-reaction', 'overlay-levelup', 'overlay-audio', 'overlay-sheet', 'overlay-pause'];
+
+function overlayAberto() {
+  return OVERLAYS.find(id => !document.getElementById(id)?.hidden) || null;
+}
+
+function abrirPausa() {
+  const onde = {
+    battle: 'Combate em andamento. O turno espera por você.',
+    map: 'No mapa do capítulo.',
+    dialogue: 'No meio de uma conversa.',
+    interlude: 'Na abertura do capítulo.',
+  }[game.screen] || '';
+  document.getElementById('pause-where').textContent = onde;
+  toggleOverlay('overlay-pause', true);
+  Audio.SFX.select();
+}
+
+function fecharPausa() {
+  toggleOverlay('overlay-pause', false);
+  Audio.SFX.cancel();
+}
+
+function wirePausa() {
+  document.getElementById('btn-pause-resume').addEventListener('click', fecharPausa);
+
+  document.getElementById('btn-pause-sheet').addEventListener('click', () => {
+    renderSheet(document.getElementById('sheet-panel'), grupoAtual());
+    toggleOverlay('overlay-sheet', true);
+  });
+
+  document.getElementById('btn-pause-log').addEventListener('click', () => {
+    fecharPausa();
+    document.getElementById('combat-log').classList.add('is-open');
+  });
+
+  document.getElementById('btn-pause-audio').addEventListener('click', () => {
+    Audio.unlock();
+    toggleOverlay('overlay-audio', true);
+  });
+
+  document.getElementById('btn-pause-title').addEventListener('click', () => {
+    // Sair descarta a campanha em andamento. Sem save ainda, entao vale
+    // dizer isso em vez de deixar o jogador descobrir depois.
+    const emJogo = game.campaign && game.screen !== 'title';
+    if (emJogo && !confirm('Sair para o início encerra esta campanha. O progresso não é salvo. Sair mesmo?')) return;
+    voltarAoTitulo();
+  });
+}
+
+function grupoAtual() {
+  return game.campaign?.party || game.session?.encounter.allies || [];
+}
+
+export function voltarAoTitulo() {
+  for (const id of OVERLAYS) toggleOverlay(id, false);
+  document.getElementById('combat-log').classList.remove('is-open');
+  game.campaign?.pararMapa();
+  game.campaign?.session?.stop();
+  game.session?.stop();
+  game.campaign = null;
+  game.session = null;
+  Audio.playTrack('menu');
+  show('title');
+}
+
 function wireLog() {
   const log = document.getElementById('combat-log');
   document.getElementById('btn-log-close').addEventListener('click', () => log.classList.remove('is-open'));
@@ -91,6 +161,7 @@ async function boot() {
   attachKeyboard();
   wireAudioPanel();
   wireLog();
+  wirePausa();
 
   on('action', ({ action }) => {
     if (action === 'mute') {
@@ -102,16 +173,17 @@ async function boot() {
     }
     if (action === 'sheet') {
       const painel = document.getElementById('sheet-panel');
-      const grupo = game.campaign?.party || game.session?.encounter.allies || [];
-      renderSheet(painel, grupo);
+      renderSheet(painel, grupoAtual());
       toggleOverlay('overlay-sheet');
     }
     if (action === 'cancel') {
-      // Esc fecha a sobreposicao aberta antes de qualquer outra coisa.
-      for (const id of ['overlay-audio', 'overlay-sheet']) {
-        const el = document.getElementById(id);
-        if (el && !el.hidden) { el.hidden = true; return; }
-      }
+      // Esc fecha o que estiver aberto; se nao houver nada aberto e o jogo
+      // estiver em andamento, abre a pausa.
+      const aberto = overlayAberto();
+      // A janela de reacao e a de evolucao exigem escolha: nao fecham no Esc.
+      if (aberto === 'overlay-reaction' || aberto === 'overlay-levelup') return;
+      if (aberto) { toggleOverlay(aberto, false); return; }
+      if (game.screen !== 'title') abrirPausa();
     }
   });
 
@@ -146,6 +218,7 @@ export function novaCampanha(capitulo = 0) {
   const campanha = new Campaign({
     show,
     onInterlude: cap => mostrarInterludio(cap),
+    onLevelUp: dados => mostrarEvolucao(dados),
   });
   game.campaign = campanha;
   campanha.comecar(capitulo);
@@ -175,6 +248,45 @@ function mostrarInterludio(capitulo) {
     const seguir = () => {
       botao.removeEventListener('click', seguir);
       document.removeEventListener('keydown', tecla);
+      Audio.SFX.select();
+      resolve();
+    };
+    const tecla = e => { if (['Enter', ' ', 'z', 'Z'].includes(e.key)) { e.preventDefault(); seguir(); } };
+    botao.addEventListener('click', seguir);
+    document.addEventListener('keydown', tecla);
+  });
+}
+
+// Tela de evolucao. Mostra o que cada um passou a ter, porque subir de
+// nivel so vale se der para ver o que mudou.
+function mostrarEvolucao({ nivel, ganhos, ultimo }) {
+  return new Promise(resolve => {
+    document.getElementById('levelup-title').textContent = `Nível ${nivel}`;
+    document.getElementById('levelup-sub').textContent = ultimo
+      ? 'O grupo alcança o nível em que a mesa está hoje.'
+      : 'O grupo cresce com o que atravessou.';
+
+    document.getElementById('levelup-body').innerHTML = ganhos.map(g => {
+      const novidades = (g.novidades || []).map(n =>
+        n.tipo === 'recurso'
+          ? `<li>${n.nome}: ${n.quantidade} uso(s)</li>`
+          : `<li>${n.nome} <em>(${n.tipo})</em></li>`).join('');
+      return `<div class="levelup-heroi">
+        <b>${g.quem.name}</b>
+        <span class="numeros">${g.hp} PV · CA ${g.ac} · prof +${g.prof}</span>
+        ${novidades ? `<ul>${novidades}</ul>` : ''}
+      </div>`;
+    }).join('');
+
+    toggleOverlay('overlay-levelup', true);
+    Audio.duckTrack(2.4);
+    Audio.SFX.victory();
+
+    const botao = document.getElementById('btn-levelup-close');
+    const seguir = () => {
+      botao.removeEventListener('click', seguir);
+      document.removeEventListener('keydown', tecla);
+      toggleOverlay('overlay-levelup', false);
       Audio.SFX.select();
       resolve();
     };

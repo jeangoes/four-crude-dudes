@@ -415,7 +415,9 @@ export class Encounter {
 
   // As reacoes que a ficha declara e cujo gatilho casa com o momento.
   availableReactions(combatant, trigger) {
+    const nivel = combatant.nivelAtual ?? combatant.level;
     return (combatant.sb.reactions || [])
+      .filter(r => (r.nivel || 1) <= nivel)
       .filter(r => r.trigger === trigger.kind)
       .filter(r => !r.available || r.available({ combatant, trigger, encounter: this }));
   }

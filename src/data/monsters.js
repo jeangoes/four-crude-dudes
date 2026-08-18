@@ -254,15 +254,45 @@ export const MONSTERS = {
  * viram "Baaz 1", "Baaz 2", "Baaz 3" e "Bozak", nunca "Bozak 4". Tipo unico
  * em campo fica sem numero.
  */
+/**
+ * Versao endurecida de um monstro fraco, para reusa-lo em capitulo adiantado
+ * sem que ele vire piada. Sobe PV, CA e dano, e ganha o titulo no nome.
+ *
+ * Declarado como `'BAAZ+'` na lista de inimigos do capitulo.
+ */
+export function veterano(sb) {
+  const escala = 1.6;
+  sb.maxHp = Math.round(sb.maxHp * escala);
+  sb.ac += 2;
+  sb.level += 3;
+  sb.prof = sb.prof + 1;
+  sb.name = `${sb.name} veterano`;
+  sb.actions = (sb.actions || []).map(a => ({
+    ...a,
+    // Um dado a mais na arma: o veterano bate mais forte, nao só aguenta.
+    damage: { ...a.damage, dice: somarUmDado(a.damage.dice) },
+  }));
+  return sb;
+}
+
+function somarUmDado(notacao) {
+  const m = String(notacao).match(/^(\d*)d(\d+)(.*)$/);
+  if (!m) return notacao;
+  const n = (m[1] === '' ? 1 : Number(m[1])) + 1;
+  return `${n}d${m[2]}${m[3] || ''}`;
+}
+
 export function spawnGroup(kinds) {
   const contagem = {};
   for (const kind of kinds) contagem[kind] = (contagem[kind] || 0) + 1;
 
   const usados = {};
   return kinds.map(kind => {
-    const factory = MONSTERS[kind];
+    const veterana = kind.endsWith('+');
+    const base = veterana ? kind.slice(0, -1) : kind;
+    const factory = MONSTERS[base];
     if (!factory) throw new Error(`monstro desconhecido: ${kind}`);
-    const sb = factory();
+    const sb = veterana ? veterano(factory()) : factory();
     const n = (usados[kind] = (usados[kind] || 0) + 1);
     sb.id = `${sb.id}-${n}`;
     // So numera quando ha mais de um do mesmo tipo em campo.

@@ -69,7 +69,9 @@ describe('grafo dos capitulos', () => {
         assert.ok((no.inimigos || []).length || no.especial,
           `${no.id} é combate mas não tem inimigos`);
         for (const kind of no.inimigos || []) {
-          assert.ok(MONSTERS[kind], `${no.id} usa monstro desconhecido: ${kind}`);
+          // O sufixo + marca a variante veterana do mesmo monstro.
+          const base = kind.endsWith('+') ? kind.slice(0, -1) : kind;
+          assert.ok(MONSTERS[base], `${no.id} usa monstro desconhecido: ${kind}`);
         }
       }
     });

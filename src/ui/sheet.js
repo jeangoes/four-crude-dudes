@@ -2,6 +2,7 @@
 // atributos, defesas, recursos gastos, condicoes ativas e concentracao.
 
 import { ABILITIES, SKILLS } from '../rules/statblock.js';
+import { nomeDoRecurso } from '../rules/progression.js';
 
 const NOMES = { for: 'FOR', des: 'DES', con: 'CON', int: 'INT', sab: 'SAB', car: 'CAR' };
 
@@ -26,7 +27,7 @@ function fichaDe(c) {
     .join(' · ') || 'não conjura';
 
   const recursos = Object.entries(c.resources)
-    .map(([k, r]) => `${k} ${r.max - r.used}/${r.max}`).join(' · ') || '—';
+    .map(([k, r]) => `${nomeDoRecurso(k)} ${r.max - r.used}/${r.max}`).join(' · ') || '—';
 
   // Só as perícias em que ele é proficiente: a lista inteira vira ruído.
   const pericias = [...new Set([...c.sb.skillProficiencies, ...c.sb.skillExpertise])]

@@ -47,9 +47,33 @@ export function defineStatblock(raw) {
   return sb;
 }
 
+// Copia rasa mais copia dos campos que a progressao altera. Nao precisa ser
+// copia profunda: magias, talentos e reacoes sao lidos, nunca escritos.
+function clonarFicha(sb) {
+  return {
+    ...sb,
+    abilities: { ...sb.abilities },
+    features: [...(sb.features || [])],
+    actions: (sb.actions || []).map(a => ({ ...a })),
+    resources: { ...(sb.resources || {}) },
+    saveProficiencies: [...(sb.saveProficiencies || [])],
+    skillProficiencies: [...(sb.skillProficiencies || [])],
+    skillExpertise: [...(sb.skillExpertise || [])],
+    resistances: [...(sb.resistances || [])],
+    immunities: [...(sb.immunities || [])],
+    vulnerabilities: [...(sb.vulnerabilities || [])],
+    conditionImmunities: [...(sb.conditionImmunities || [])],
+    spellcasting: sb.spellcasting ? { ...sb.spellcasting, slots: { ...(sb.spellcasting.slots || {}) } } : null,
+  };
+}
+
 export class Combatant {
   constructor(statblock, { side, pos } = {}) {
-    this.sb = statblock;
+    // Copia a ficha em vez de guardar a referencia. As fichas em data/ sao
+    // moldes compartilhados, e subir de nivel escreve em maxHp, ac, level,
+    // features e actions. Sem a copia, terminar uma campanha deixaria o
+    // molde no nivel 8 e a campanha seguinte comecaria ali.
+    this.sb = clonarFicha(statblock);
     this.id = statblock.id;
     this.name = statblock.name;
     this.side = side || statblock.side;

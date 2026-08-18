@@ -6,6 +6,7 @@
 import { defineStatblock } from '../rules/statblock.js';
 import { talentsFor } from './talents.js';
 import { reactionsFor } from './reactions.js';
+import { PROGRESSOES } from './progressoes.js';
 
 // ---------- magias ----------
 // Formato: o motor entende `attack` (jogada de ataque), `save` (resistencia),
@@ -116,6 +117,12 @@ export const SPELLS = {
   },
 };
 
+// Marca em que nivel o item entra no kit daquele personagem. Copia em vez
+// de alterar a definicao original, porque a mesma magia pode chegar em
+// niveis diferentes para pessoas diferentes: Padrao Hipnotico e do 5o para
+// o Darian e do 6o para o Lathuriel.
+const em = (nivel, item) => ({ ...item, nivel });
+
 // ---------- fichas ----------
 
 export const HEROES = {
@@ -133,9 +140,16 @@ export const HEROES = {
     actions: [
       { name: 'Bastão', kind: 'melee', ability: 'for', reach: 1.5, damage: { dice: '1d6', type: 'impacto' } },
     ],
-    spells: [SPELLS.raioDeFogo, SPELLS.bolaDeFogo, SPELLS.padraoHipnotico, SPELLS.passoNebuloso],
+    progressao: PROGRESSOES.DARIAN,
+    spells: [
+      em(1, SPELLS.raioDeFogo),
+      em(3, SPELLS.passoNebuloso),
+      em(5, SPELLS.bolaDeFogo),
+      em(5, SPELLS.padraoHipnotico),
+    ],
     talents: talentsFor('DARIAN'),
-    reactions: reactionsFor('DARIAN'),
+    reactions: reactionsFor('DARIAN').map(r =>
+      em(r.id === 'contramagia' ? 5 : 1, r)),
     tactic: 'atirador',
   }),
 
@@ -156,9 +170,18 @@ export const HEROES = {
     actions: [
       { name: 'Espada longa', kind: 'melee', ability: 'for', reach: 1.5, damage: { dice: '1d8', type: 'cortante' } },
     ],
-    spells: [SPELLS.chamaSagrada, SPELLS.dardoOrientador, SPELLS.palavraCurativa, SPELLS.curarFerimentos, SPELLS.bencao, SPELLS.guardioesEspirituais],
-    talents: talentsFor('ELANDRIN'),
-    reactions: reactionsFor('ELANDRIN'),
+    progressao: PROGRESSOES.ELANDRIN,
+    spells: [
+      em(1, SPELLS.chamaSagrada),
+      em(2, SPELLS.dardoOrientador),
+      em(2, SPELLS.palavraCurativa),
+      em(2, SPELLS.curarFerimentos),
+      em(2, SPELLS.bencao),
+      em(6, SPELLS.guardioesEspirituais),
+    ],
+    talents: talentsFor('ELANDRIN').map(t =>
+      em({ segundoFolego: 1, radianciaDoAmanhecer: 3, expulsarMortosVivos: 3, brandoDeApoio: 5 }[t.id] || 1, t)),
+    reactions: reactionsFor('ELANDRIN').map(r => em(3, r)),
     tactic: 'guarda',
   }),
 
@@ -178,8 +201,15 @@ export const HEROES = {
     ],
     resources: { maldicaoDoHexblade: 1, inspiracaoDeBardo: 4 },
     shortRestResources: ['maldicaoDoHexblade'],
-    spells: [SPELLS.rajadaMistica, SPELLS.sussurrosDissonantes, SPELLS.imagemEspelhada, SPELLS.padraoHipnotico],
-    talents: talentsFor('LATHURIEL'),
+    progressao: PROGRESSOES.LATHURIEL,
+    spells: [
+      em(1, SPELLS.sussurrosDissonantes),
+      em(2, SPELLS.rajadaMistica),
+      em(3, SPELLS.imagemEspelhada),
+      em(6, SPELLS.padraoHipnotico),
+    ],
+    talents: talentsFor('LATHURIEL').map(t =>
+      em({ maldicaoDoHexblade: 2, florearDeLamina: 3 }[t.id] || 1, t)),
     reactions: reactionsFor('LATHURIEL'),
     tactic: 'bruto',
   }),
@@ -200,7 +230,8 @@ export const HEROES = {
       { name: 'Arco longo', kind: 'ranged', ability: 'des', range: 45, damage: { dice: '1d8', type: 'perfurante' } },
       { name: 'Adaga', kind: 'melee', ability: 'des', reach: 1.5, damage: { dice: '1d4', type: 'perfurante' } },
     ],
-    spells: [SPELLS.marcaDoCacador, SPELLS.flechaCerteira],
+    progressao: PROGRESSOES.OWO,
+    spells: [em(2, SPELLS.marcaDoCacador), em(2, SPELLS.flechaCerteira)],
     talents: talentsFor('OWO'),
     reactions: reactionsFor('OWO'),
     tactic: 'atirador',

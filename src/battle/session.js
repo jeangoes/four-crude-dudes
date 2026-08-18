@@ -11,6 +11,7 @@ import { Field } from './field.js';
 import { BattleView } from './view.js';
 import { Animator } from './animator.js';
 import { planTurn } from './ai.js';
+import { kitDisponivel } from '../rules/progression.js';
 import { BattleHUD, askReaction } from '../ui/hud.js';
 import { CombatLog } from '../ui/log.js';
 import { attachPointer, on } from '../engine/input.js';
@@ -238,7 +239,10 @@ export class BattleSession {
     this.view.clearOverlays();
 
     const melee = (actor.sb.actions || []).filter(a => a.kind === 'melee' || a.kind === 'ranged');
-    const spells = actor.sb.spells || [];
+    // O menu mostra so o que o nivel atual ja liberou. Bola de Fogo nao
+    // aparece cinza no capitulo I: ela ainda nao existe.
+    const kit = kitDisponivel(actor);
+    const spells = kit.spells;
 
     const commands = [];
 
@@ -255,7 +259,7 @@ export class BattleSession {
       });
     }
 
-    const talents = actor.sb.talents || [];
+    const talents = kit.talents;
     if (talents.length) {
       commands.push({
         id: 'talentos',
@@ -312,7 +316,7 @@ export class BattleSession {
   }
 
   openSpellMenu(actor) {
-    const spells = actor.sb.spells || [];
+    const spells = kitDisponivel(actor).spells;
     const commands = spells.map(spell => {
       const check = canCast(actor, spell);
       const needsAction = spell.castTime !== 'bonus';
@@ -347,7 +351,7 @@ export class BattleSession {
   }
 
   openTalentMenu(actor) {
-    const commands = (actor.sb.talents || []).map(talent => {
+    const commands = kitDisponivel(actor).talents.map(talent => {
       const restante = talent.resource ? actor.resourceLeft(talent.resource) : null;
       const alvos = this.targetsFor(actor, talent);
       const precisaAlvo = talent.range > 0 && !talent.area;

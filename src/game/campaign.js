@@ -9,7 +9,8 @@ import { Field } from '../battle/field.js';
 import { BattleSession } from '../battle/session.js';
 import { ChapterMap } from '../ui/map.js';
 import { DialogueScreen } from '../ui/dialogue.js';
-import { CAPITULOS, noPorId, noInicial } from '../data/chapters.js';
+import { CAPITULOS, noPorId, noInicial, nivelDoCapitulo, NIVEL_FINAL } from '../data/chapters.js';
+import { aplicarNivel } from '../rules/progression.js';
 import { HEROES, PARTY_ORDER } from '../data/heroes.js';
 import { spawnGroup } from '../data/monsters.js';
 import { CENAS, NPCS, CONVIDADOS, SOTH } from '../data/npcs.js';
@@ -21,9 +22,10 @@ const FORMACAO = {
 };
 
 export class Campaign {
-  constructor({ show, onInterlude = null }) {
+  constructor({ show, onInterlude = null, onLevelUp = null }) {
     this.show = show;
     this.onInterlude = onInterlude;
+    this.onLevelUp = onLevelUp;
 
     this.party = PARTY_ORDER.map(k => new Combatant(HEROES[k], { side: 'ally' }));
     this.bandeiras = new Set();
@@ -47,10 +49,20 @@ export class Campaign {
     this.capituloIndex = indice;
     this.visitados = new Set();
     this.noAtual = noInicial(this.capitulo).id;
-    // Todo capitulo comeca com o grupo inteiro de pe. Entre capitulos ha
-    // descanso longo implicito: e a viagem.
-    for (const p of this.party) p.longRest();
+    // O grupo entra no nivel daquele capitulo. Comecar a campanha e comecar
+    // no 1, e pular direto para a Descida entra no 5, com o kit de la.
+    this.nivelAtual = nivelDoCapitulo(indice);
+    for (const p of this.party) {
+      aplicarNivel(p, this.nivelAtual);
+      p.longRest();
+    }
     await this.abrirCapitulo();
+  }
+
+  // Sobe o grupo de nivel e devolve o que cada um ganhou, para a tela.
+  subirNivel(novoNivel) {
+    this.nivelAtual = novoNivel;
+    return this.party.map(p => ({ quem: p, ...aplicarNivel(p, novoNivel) }));
   }
 
   async abrirCapitulo() {
@@ -96,7 +108,7 @@ export class Campaign {
       return;
     }
     const estado = this.resumoDoGrupo();
-    dica.textContent = `${no.titulo}${no.aviso ? ' — ' + no.aviso : ''}   ·   ${estado}`;
+    dica.textContent = `Nível ${this.nivelAtual} · ${no.titulo}${no.aviso ? ' — ' + no.aviso : ''}   ·   ${estado}`;
   }
 
   resumoDoGrupo() {
@@ -131,21 +143,30 @@ export class Campaign {
   }
 
   async fecharCapitulo() {
-    this.mostrarMapa();
-    if (this.capituloIndex >= CAPITULOS.length - 1) {
+    this.pararMapa();
+    const ultimo = this.capituloIndex >= CAPITULOS.length - 1;
+
+    // Marco: fechar o capitulo sobe o grupo ao nivel do proximo. No ultimo,
+    // sobe ao nivel em que a mesa esta hoje.
+    const destino = ultimo ? NIVEL_FINAL : nivelDoCapitulo(this.capituloIndex + 1);
+    if (destino > this.nivelAtual) {
+      const ganhos = this.subirNivel(destino);
+      if (this.onLevelUp) await this.onLevelUp({ nivel: destino, ganhos, ultimo });
+    }
+
+    if (ultimo) {
+      this.mostrarMapa();
       document.getElementById('map-hint').textContent =
-        'A campanha alcança o Templo de Paladine. Aqui a mesa continua na próxima sessão.';
+        `A campanha alcança o Templo de Paladine com o grupo no nível ${NIVEL_FINAL}. Daqui em diante, a mesa continua na próxima sessão.`;
       return;
     }
-    setTimeout(async () => {
-      this.pararMapa();
-      this.capituloIndex++;
-      this.visitados = new Set();
-      this.noAtual = noInicial(this.capitulo).id;
-      // Entre capitulos, descanso longo: a viagem cura.
-      for (const p of this.party) p.longRest();
-      await this.abrirCapitulo();
-    }, 1600);
+
+    this.capituloIndex++;
+    this.visitados = new Set();
+    this.noAtual = noInicial(this.capitulo).id;
+    // Entre capitulos, descanso longo: a viagem cura.
+    for (const p of this.party) p.longRest();
+    await this.abrirCapitulo();
   }
 
   // ---------- combate ----------
