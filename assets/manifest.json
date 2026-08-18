@@ -1,0 +1,173 @@
+{
+  "_comment": "Registro de arte. Entrada com 'src' usa PNG; entrada com 'procedural' e desenhada pelo motor. Para trocar arte procedural por pintada: gere o PNG, coloque em assets/sprites/, troque 'procedural' por 'src'. Nenhuma mudanca de codigo.",
+  "_poses": [
+    "idle",
+    "attack",
+    "hurt",
+    "down"
+  ],
+  "heroes": {
+    "DARIAN": {
+      "src": "assets/sprites/heroes/darian.png",
+      "frameW": 104,
+      "frameH": 136,
+      "poses": {
+        "idle": 0
+      }
+    },
+    "ELANDRIN": {
+      "src": "assets/sprites/heroes/elandrin.png",
+      "frameW": 104,
+      "frameH": 136,
+      "poses": {
+        "idle": 0
+      }
+    },
+    "LATHURIEL": {
+      "src": "assets/sprites/heroes/lathuriel.png",
+      "frameW": 104,
+      "frameH": 136,
+      "poses": {
+        "idle": 0
+      }
+    },
+    "OWO": {
+      "src": "assets/sprites/heroes/owo.png",
+      "frameW": 104,
+      "frameH": 136,
+      "poses": {
+        "idle": 0
+      }
+    }
+  },
+  "monsters": {
+    "BAAZ": {
+      "procedural": "draconian",
+      "palette": {
+        "scale": "#6b7a3a",
+        "belly": "#a8b06a",
+        "wing": "#4a5526",
+        "horn": "#d8cfa8",
+        "eye": "#ffcc33"
+      },
+      "build": {
+        "height": 0.86,
+        "bulk": 0.95,
+        "wings": "folded",
+        "crest": "none"
+      }
+    },
+    "KAPAK": {
+      "procedural": "draconian",
+      "palette": {
+        "scale": "#7a4a2a",
+        "belly": "#b08a5a",
+        "wing": "#4e2d18",
+        "horn": "#e0d0b0",
+        "eye": "#88ff66"
+      },
+      "build": {
+        "height": 0.9,
+        "bulk": 0.88,
+        "wings": "folded",
+        "crest": "low"
+      }
+    },
+    "BOZAK": {
+      "procedural": "draconian",
+      "palette": {
+        "scale": "#8a6a20",
+        "belly": "#c0a44e",
+        "wing": "#5c4614",
+        "horn": "#f0e0b0",
+        "eye": "#ff7733"
+      },
+      "build": {
+        "height": 0.94,
+        "bulk": 0.82,
+        "wings": "half",
+        "crest": "high"
+      }
+    },
+    "SIVAK": {
+      "procedural": "draconian",
+      "palette": {
+        "scale": "#8d9aa8",
+        "belly": "#c3ccd6",
+        "wing": "#5f6b78",
+        "horn": "#eef2f6",
+        "eye": "#66ddff"
+      },
+      "build": {
+        "height": 1.06,
+        "bulk": 1.1,
+        "wings": "spread",
+        "crest": "high"
+      }
+    },
+    "AURAK": {
+      "procedural": "draconian",
+      "palette": {
+        "scale": "#b8a24a",
+        "belly": "#e0d089",
+        "wing": "#7a6a24",
+        "horn": "#fff4c4",
+        "eye": "#ff44aa"
+      },
+      "build": {
+        "height": 1.0,
+        "bulk": 0.8,
+        "wings": "none",
+        "crest": "high"
+      }
+    },
+    "MORTO_VIVO": {
+      "procedural": "undead",
+      "palette": {
+        "scale": "#5a5f52",
+        "belly": "#7d8271",
+        "wing": "#3a3d34",
+        "horn": "#cfd4c2",
+        "eye": "#9effc4"
+      },
+      "build": {
+        "height": 0.92,
+        "bulk": 0.8,
+        "wings": "none",
+        "crest": "none"
+      }
+    },
+    "CORNELIUS": {
+      "procedural": "draconian",
+      "palette": {
+        "scale": "#4a3550",
+        "belly": "#7a5f88",
+        "wing": "#2e2036",
+        "horn": "#e8dcc0",
+        "eye": "#ff5566"
+      },
+      "build": {
+        "height": 1.08,
+        "bulk": 1.15,
+        "wings": "none",
+        "crest": "high"
+      }
+    },
+    "SOTH": {
+      "procedural": "undead",
+      "palette": {
+        "scale": "#3a3a44",
+        "belly": "#5a5a66",
+        "wing": "#22222a",
+        "horn": "#c9a227",
+        "eye": "#ff8a2a"
+      },
+      "build": {
+        "height": 1.12,
+        "bulk": 1.1,
+        "wings": "none",
+        "crest": "high"
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "four-crude-dudes",
+  "version": "4.0.0-dev",
+  "description": "RPG tatico em turno da campanha de Dragonlance da mesa",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/",
+    "serve": "python3 -m http.server 8000"
+  }
+}
