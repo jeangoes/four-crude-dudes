@@ -253,3 +253,48 @@ describe('nomes e continuidade', () => {
     assert.deepEqual(grupo.map(s => s.name), ['Baaz 1', 'Baaz 2', 'Bozak']);
   });
 });
+
+describe('interludios', () => {
+  test('todo capitulo tem abertura', async () => {
+    const { INTERLUDIOS } = await import('../src/data/interludes.js');
+    for (const cap of CAPITULOS) {
+      const i = INTERLUDIOS[cap.id];
+      assert.ok(i, `${cap.id} não tem interlúdio`);
+      assert.ok(i.paragrafos.length >= 1);
+      assert.ok(['cronica', 'jogo'].includes(i.origem));
+    }
+  });
+
+  test('o que vem de cronica traz credito, o que e do jogo nao se passa por cronica', async () => {
+    const { INTERLUDIOS } = await import('../src/data/interludes.js');
+    for (const [id, i] of Object.entries(INTERLUDIOS)) {
+      if (i.origem === 'cronica') {
+        assert.ok(i.data, `${id}: crônica sem data`);
+        assert.ok(i.titulo, `${id}: crônica sem título`);
+        assert.match(i.data, /^\d{4}-\d{2}-\d{2}$/);
+      } else {
+        // Texto do jogo nao pode fingir ser cronica publicada.
+        assert.equal(i.data, undefined, `${id}: texto do jogo não pode ter data de crônica`);
+      }
+    }
+  });
+
+  test('os trechos de cronica batem com o arquivo publicado', async () => {
+    const { INTERLUDIOS } = await import('../src/data/interludes.js');
+    const fs = await import('node:fs');
+    const base = '/mnt/backup/Claude/06_RPG/RPG Recursos/site-conteudo/cronicas';
+    if (!fs.existsSync(base)) return;   // fora da máquina do Jean, pula
+
+    const arquivos = fs.readdirSync(base);
+    for (const [id, i] of Object.entries(INTERLUDIOS)) {
+      if (i.origem !== 'cronica') continue;
+      const arquivo = arquivos.find(f => f.startsWith(i.data));
+      assert.ok(arquivo, `${id}: nenhuma crônica com data ${i.data}`);
+      const texto = fs.readFileSync(`${base}/${arquivo}`, 'utf-8');
+      for (const p of i.paragrafos) {
+        assert.ok(texto.includes(p),
+          `${id}: parágrafo não confere com a crônica publicada — "${p.slice(0, 60)}..."`);
+      }
+    }
+  });
+});

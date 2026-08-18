@@ -54,6 +54,7 @@ export const CAPITULOS = [
       { id: 'c4', tipo: 'combate', em: { x: 0.85, y: 0.42 }, titulo: 'Lord Soth', chefe: true,
         especial: 'soth',
         objetivo: { kind: 'sobreviver', rounds: 5 },
+        trilha: 'soth',
         inimigos: ['MORTO_VIVO', 'MORTO_VIVO'],
         aviso: 'Lord Soth é um cavaleiro da morte. Não se vence no braço. Aguente cinco rodadas.',
         liga: [] },

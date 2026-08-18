@@ -33,6 +33,23 @@ Publicado em `https://jeangoes.github.io/four-crude-dudes/`.
 
 No celular, toque no campo para escolher quadrado e nos itens de menu para confirmar.
 
+## O que tem dentro
+
+Cinco capítulos que seguem o arco que a mesa jogou de verdade: a Fuga de Vogler, as Catacumbas de Kalaman, a Infiltração, a Descida e a Cidade Soterrada. Cada um é um mapa de nós com combate, diálogo, descanso e decisão.
+
+O combate é D&D 5e para valer, em grid de 12x8 quadrados de 1,5 m. Iniciativa, ação e ação bônus, reação, espaços de magia com upcast, concentração, vantagem e desvantagem. O log mostra cada rolagem por extenso, do jeito que a mesa reconhece:
+
+```
+Darian ataca Baaz com Bastão: d20(15)+8 = 23 vs CA 15 — acerta
+Baaz sofre 7 de impacto — 1d6+2: [5]+2 = 7
+```
+
+Os draconianos morrem como no cânone. Baaz vira estátua de pedra e prende a arma de quem o matou de perto. Kapak deixa poça de ácido. Bozak explode. Sivak assume a forma de quem derruba, e passa a usar o nome e o sprite da vítima. Aurak vira energia que detona três rodadas depois.
+
+Nem todo encontro se vence no braço. Lord Soth é invulnerável: aguente cinco rodadas até a saída abrir. O Julgamento dos Dragões se resolve na conversa, e precisa de duas vozes, porque foi assim que o grupo venceu na mesa.
+
+A abertura de cada capítulo traz o texto da crônica publicada no Diário de Campanha, creditada por sessão e data. Onde o arco é anterior às crônicas, o texto é escrito para o jogo e a tela diz isso.
+
 ## Estrutura
 
 ```
@@ -49,6 +66,7 @@ assets/
   sprites/ portraits/ bg/
 legacy/
   v2.3-beat-em-up.html   a versão anterior, um beat 'em up
+tests/                  motor de regras, geometria, kits e campanha
 ```
 
 `src/rules/` não conhece DOM nem canvas, então roda no Node direto:
@@ -72,6 +90,10 @@ Para substituir um inimigo procedural por arte pintada: gere o PNG, coloque em `
 Nenhuma mudança de código. Poses que faltarem na folha caem para `idle` com uma deformação, então arte parcial não quebra nada.
 
 As poses são `idle`, `attack`, `hurt` e `down`, nessa ordem, lado a lado na folha.
+
+## No celular
+
+Funciona, com uma ressalva honesta: num grid de 12x8 em tela de 375 px, cada quadrado fica com uns 26 px depois da escala. Dá para jogar, mas mirar um quadrado específico é chato. O menu, a ficha e o diálogo são confortáveis; o campo é apertado.
 
 ## A mesa
 

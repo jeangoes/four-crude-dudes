@@ -14,6 +14,8 @@ import { HEROES, PARTY_ORDER } from './data/heroes.js';
 import { spawnGroup } from './data/monsters.js';
 import { Campaign } from './game/campaign.js';
 import { CAPITULOS } from './data/chapters.js';
+import { interludioDe } from './data/interludes.js';
+import { renderSheet } from './ui/sheet.js';
 
 export const VERSION = '4.0-dev';
 
@@ -98,7 +100,12 @@ async function boot() {
     if (action === 'log' && game.screen === 'battle') {
       document.getElementById('combat-log').classList.toggle('is-open');
     }
-    if (action === 'sheet') toggleOverlay('overlay-sheet');
+    if (action === 'sheet') {
+      const painel = document.getElementById('sheet-panel');
+      const grupo = game.campaign?.party || game.session?.encounter.allies || [];
+      renderSheet(painel, grupo);
+      toggleOverlay('overlay-sheet');
+    }
     if (action === 'cancel') {
       // Esc fecha a sobreposicao aberta antes de qualquer outra coisa.
       for (const id of ['overlay-audio', 'overlay-sheet']) {
@@ -145,14 +152,23 @@ export function novaCampanha(capitulo = 0) {
   return campanha;
 }
 
-// Abertura do capitulo no visual do tomo. O bloco 6 troca o texto pelo
-// trecho da cronica real; a mecanica de tela ja e esta.
+// Abertura do capitulo no visual do tomo do Diario de Campanha.
+//
+// Onde ha cronica publicada, o texto e o dela e a tela credita a sessao.
+// Onde nao ha, e texto escrito para o jogo e a tela diz isso: cronica que
+// a mesa nao jogou nao se inventa.
 function mostrarInterludio(capitulo) {
   return new Promise(resolve => {
+    const inter = interludioDe(capitulo.id);
+    const paragrafos = inter?.paragrafos?.length ? inter.paragrafos : [capitulo.abertura];
+
     document.getElementById('interlude-numeral').textContent = capitulo.numero;
     document.getElementById('interlude-title').textContent = capitulo.titulo;
     document.getElementById('interlude-body').innerHTML =
-      `<p>${capitulo.abertura}</p>`;
+      paragrafos.map(t => `<p>${t}</p>`).join('') +
+      (inter?.origem === 'cronica'
+        ? `<p class="tome-fonte">Do Diário de Campanha — ${inter.titulo}, ${formatarData(inter.data)}</p>`
+        : `<p class="tome-fonte">Prólogo escrito para o jogo. Esta parte do arco é anterior às crônicas do Diário.</p>`);
     show('interlude');
 
     const botao = document.getElementById('btn-interlude-next');
@@ -166,6 +182,14 @@ function mostrarInterludio(capitulo) {
     botao.addEventListener('click', seguir);
     document.addEventListener('keydown', tecla);
   });
+}
+
+function formatarData(iso) {
+  if (!iso) return '';
+  const [ano, mes, dia] = iso.split('-');
+  const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  return `${Number(dia)} de ${meses[Number(mes) - 1]} de ${ano}`;
 }
 
 // ---------- encontro de teste ----------

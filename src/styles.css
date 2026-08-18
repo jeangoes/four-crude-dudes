@@ -392,3 +392,44 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Crédito da crônica no rodapé do tomo. Discreto, mas presente: o leitor
+   precisa saber quando está lendo a mesa e quando está lendo o jogo. */
+.tome-fonte {
+  margin-top: 1.8em;
+  padding-top: 0.9em;
+  border-top: 1px solid rgba(122, 95, 18, 0.35);
+  font-size: 0.85em;
+  font-style: italic;
+  color: #6b5a34;
+  text-align: right;
+}
+.tome-fonte::first-letter { font-size: 1em; float: none; padding: 0; color: inherit; font-family: inherit; }
+
+/* ---------- ficha ---------- */
+
+.ficha { border-top: var(--edge); padding-top: 1rem; margin-top: 1rem; }
+.ficha:first-of-type { border-top: none; margin-top: 0; }
+.ficha header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.ficha h4 { font-family: var(--font-display); color: var(--gold-bright); font-size: 1.15rem; }
+.ficha h4 em { font-size: 0.7em; color: var(--blood-bright); font-style: italic; }
+.ficha header span { font-size: 0.92rem; color: var(--parchment-2); font-style: italic; }
+
+.ficha-attrs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; margin: 0.8rem 0; }
+.ficha-attr {
+  border: 1px solid #322a20; background: var(--ink-3);
+  padding: 0.4rem 0.2rem; text-align: center;
+}
+.ficha-attr b { display: block; font-family: var(--font-ui); font-size: 0.42rem; color: var(--gold); }
+.ficha-attr span { display: block; font-size: 1.15rem; color: var(--parchment); }
+.ficha-attr i { display: block; font-family: var(--font-ui); font-size: 0.42rem; color: #8d8172; font-style: normal; }
+
+.ficha-linhas { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.9rem; font-size: 0.95rem; }
+.ficha-linhas dt { font-family: var(--font-display); color: var(--gold); white-space: nowrap; }
+.ficha-linhas dd { color: var(--parchment-2); }
+
+@media (max-width: 560px) {
+  .ficha-attrs { grid-template-columns: repeat(3, 1fr); }
+  .ficha-linhas { grid-template-columns: 1fr; gap: 0 0; }
+  .ficha-linhas dd { margin-bottom: 0.4rem; }
+}

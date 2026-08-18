@@ -194,7 +194,7 @@ export class Campaign {
     const session = new BattleSession({
       canvas: document.getElementById('battle-canvas'),
       field, party: elenco, foes: inimigos,
-      track: this.capitulo.trilha,
+      track: no.trilha || this.capitulo.trilha,
       backdrop: this.capitulo.fundo,
       name: no.titulo,
       objective: no.objetivo,

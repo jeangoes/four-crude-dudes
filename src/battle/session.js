@@ -14,7 +14,7 @@ import { planTurn } from './ai.js';
 import { BattleHUD, askReaction } from '../ui/hud.js';
 import { CombatLog } from '../ui/log.js';
 import { attachPointer, on } from '../engine/input.js';
-import { SFX, playTrack } from '../engine/audio.js';
+import { SFX, playTrack, duckTrack } from '../engine/audio.js';
 
 const MODE = { IDLE: 'idle', COMMAND: 'command', TARGET: 'target', MOVE: 'move', BUSY: 'busy', OVER: 'over' };
 
@@ -117,7 +117,7 @@ export class BattleSession {
       const obj = this.encounter.objective;
       if (obj?.kind === 'sobreviver') {
         const faltam = obj.rounds - e.round + 1;
-        if (faltam > 0) this.hud.showBanner(`Aguente mais ${faltam} rodada${faltam > 1 ? 's' : ''}`, 1600);
+        if (faltam > 0) { this.hud.showBanner(`Aguente mais ${faltam} rodada${faltam > 1 ? 's' : ''}`, 1600); SFX.tick(); }
       }
     }
     if (e.type === 'damage') {
@@ -148,7 +148,8 @@ export class BattleSession {
       this.mode = MODE.OVER;
       this.hud.clearCommands();
       this.hud.showBanner(e.outcome === 'vitoria' ? 'Vitória' : 'O grupo tombou', 0);
-      if (e.outcome === 'vitoria') SFX.victory();
+      duckTrack(3);
+      e.outcome === 'vitoria' ? SFX.victory() : SFX.defeat();
       setTimeout(() => this.onFinish?.(e.outcome), 1200);
     }
 

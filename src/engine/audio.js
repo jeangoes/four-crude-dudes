@@ -143,7 +143,23 @@ export const SFX = {
   cancel() { unlock(); body({ f1: 320, f2: 200, dur: 0.07, type: 'square', gain: 0.12 }); },
   victory() {
     unlock();
-    [523, 659, 784, 1047].forEach((f, i) => body({ f1: f, f2: null, dur: 0.26, type: 'square', gain: 0.2, at: i * 0.15 }));
+    // Terça maior subindo: a unica coisa alegre do jogo.
+    [523, 659, 784, 1047].forEach((f, i) =>
+      body({ f1: f, f2: null, dur: 0.3, type: 'square', gain: 0.2, at: i * 0.14 }));
+    [261, 330, 392].forEach((f, i) =>
+      body({ f1: f, f2: null, dur: 0.7, type: 'triangle', gain: 0.12, at: 0.42 + i * 0.02 }));
+  },
+  defeat() {
+    unlock();
+    // Meio-tom descendo, sem resolucao.
+    [392, 370, 330, 294].forEach((f, i) =>
+      body({ f1: f, f2: f * 0.98, dur: 0.55, type: 'triangle', gain: 0.18, at: i * 0.26 }));
+    transient({ dur: 0.5, cutoff: 500, gain: 0.35, at: 1.0 });
+  },
+  // Aviso de rodada em encontro cronometrado: um toque seco, nao musical.
+  tick() {
+    unlock();
+    body({ f1: 880, f2: 660, dur: 0.09, type: 'square', gain: 0.14 });
   },
 };
 
@@ -157,6 +173,8 @@ const TRACKS = {
   descida:     { root: 98.00,  scale: [0, 1, 3, 6, 7, 8, 11], bpm: 66,  wave: 'sine' },
   ponte:       { root: 164.81, scale: [0, 2, 3, 6, 7, 9, 10], bpm: 118, wave: 'sawtooth' },
   menu:        { root: 196.00, scale: [0, 2, 4, 5, 7, 9, 11], bpm: 84,  wave: 'triangle' },
+  // Encontro sem saida pelo braco: acorde diminuto, andamento arrastado.
+  soth:        { root: 87.31,  scale: [0, 1, 3, 6, 7, 9, 10], bpm: 54,  wave: 'sine' },
 };
 
 export function playTrack(name) {
@@ -206,6 +224,17 @@ export function playTrack(name) {
 
   currentTrack = state;
   tick();
+}
+
+// Abaixa a trilha por um instante, para a fanfarra nao brigar com ela.
+export function duckTrack(seconds = 2.4) {
+  if (!ctx || !musicGain) return;
+  const t = ctx.currentTime;
+  const alvo = prefs.music;
+  musicGain.gain.cancelScheduledValues(t);
+  musicGain.gain.setValueAtTime(musicGain.gain.value, t);
+  musicGain.gain.linearRampToValueAtTime(alvo * 0.18, t + 0.15);
+  musicGain.gain.linearRampToValueAtTime(alvo, t + seconds);
 }
 
 export function stopTrack() {

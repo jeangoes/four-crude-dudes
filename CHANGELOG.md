@@ -2,6 +2,19 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-17 (bloco 6)
+
+### Adicionado
+- **Aberturas de capítulo com o texto real das crônicas** (`src/data/interludes.js`). Onde há crônica publicada no Diário de Campanha, o parágrafo é o dela e a tela credita sessão e data. Onde o arco é anterior às crônicas (Vogler e as Catacumbas), o texto é escrito para o jogo e a tela diz isso: crônica que a mesa não jogou não se inventa. Um teste compara os trechos com os arquivos publicados e falha se divergirem.
+- **Ficha do grupo**, aberta com I. Mostra o que a mesa consulta no papel: atributos com modificador, CA, iniciativa, deslocamento, CD de magia, espaços por nível, recursos de classe, dados de vida, perícias proficientes, condições ativas e concentração. A ficha do Owo aparece marcada como provisória, porque ainda é aproximação.
+- **Áudio de fim de encontro.** Fanfarra de vitória e um toque de derrota que desce meio tom sem resolver. A trilha abaixa durante os dois, para não brigarem.
+- Trilha própria para o encontro do Lord Soth: acorde diminuto, 54 bpm. Encontro que não se vence pelo braço não soa como os outros.
+- Aviso sonoro a cada rodada nos encontros cronometrados.
+- 3 testes de fidelidade dos interlúdios. Total do projeto: 117.
+
+### Verificado
+- Tela estreita (375x812): sem rolagem horizontal, campo e menu cabem. O grid fica apertado para toque, o que está registrado no README em vez de escondido.
+
 ## 2026-08-17 (bloco 5)
 
 ### Adicionado
