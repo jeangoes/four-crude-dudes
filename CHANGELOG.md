@@ -2,6 +2,20 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-17 (bloco 8)
+
+### Adicionado
+- **Save da campanha** (`src/game/save.js`), no `localStorage`, gravado sozinho no mapa entre um nó e outro. Guarda capítulo, nó, nível, nós visitados, bandeiras de decisão e, de cada herói, os pontos de vida, o PV temporário, os espaços gastos, os recursos, os dados de vida, as salvaguardas contra a morte e as condições.
+  - Grava só o **gasto**, nunca o máximo: o teto de PV e a tabela de espaços vêm da tabela de nível ao restaurar. Assim um save antigo não trava o grupo num balanceamento velho.
+  - **Não salva no meio do combate**, de propósito. Ali há ordem de iniciativa, animação pendente e reação em aberto, e guardar isso seria frágil. Quem sai durante uma batalha volta ao começo daquele nó, e o menu avisa antes.
+  - Quem estava caído volta de pé com 1 PV ao retomar, porque um encontro que abre com alguém no chão não é jogável.
+  - Efeitos e concentração não atravessam o save: são de combate, não de campanha.
+- **Botão Continuar na tela de título**, ligado quando há save, mostrando capítulo, nível, onde o grupo parou e quantos estão caídos.
+- **Nova campanha avisa antes de apagar** o progresso guardado, porque o botão fica ao lado do Continuar.
+- Save de versão diferente ou corrompido é recusado e apagado em vez de restaurado pela metade. Num jogo desta escala, migrar meio estado é pior que recomeçar.
+- Pulos de depuração (`__debug.capitulo(4)`) não sobrescrevem a campanha guardada.
+- `tests/save.test.js`, 8 testes de ida e volta. Total do projeto: 153.
+
 ## 2026-08-17 (correção de toque)
 
 ### Corrigido

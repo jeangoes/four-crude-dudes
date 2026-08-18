@@ -28,6 +28,8 @@ O grupo persiste entre os nós. Pontos de vida, espaços de magia e recursos de 
 
 Perder um encontro não tem tela de fim de jogo. O grupo recua, faz descanso longo e tenta de novo.
 
+**O progresso é salvo sozinho**, no mapa, entre um nó e outro. É o único ponto seguro: no meio de um combate há ordem de iniciativa, animação pendente e reação em aberto, e guardar isso seria frágil. Quem fecha o navegador no meio de uma batalha volta ao começo daquele nó, e o jogo avisa antes de sair. A tela de título mostra onde o grupo parou e o botão **Continuar** retoma exatamente ali, com os pontos de vida, os espaços gastos e as decisões tomadas.
+
 ### A progressão
 
 O grupo **começa no nível 1** em Vogler, como na aventura publicada, e chega ao **nível 8** na Ponte, que é onde a mesa está hoje. Sobe de nível ao fechar cada capítulo, com uma tela mostrando o que cada um ganhou.
@@ -121,9 +123,9 @@ Depois abra `http://localhost:8000`.
 npm test
 ```
 
-145 testes, sem dependências: o `package.json` existe só para ligar o `node --test`. `src/rules/` não conhece DOM nem canvas, então roda no Node direto.
+153 testes, sem dependências: o `package.json` existe só para ligar o `node --test`. `src/rules/` não conhece DOM nem canvas, então roda no Node direto.
 
-Cobrem o motor de 5e (crítico dobra dados e não o fixo, vantagem e desvantagem se cancelam, resistência bem-sucedida causa metade, Esculpir Magias poupa exatamente 1 mais o nível da magia), a geometria do campo (linha de visão, terreno difícil, áreas de efeito), a progressão (cada herói termina exatamente na ficha da mesa) e a integridade dos capítulos (todo nó é alcançável, todo destino existe, todo terreno cabe no campo).
+Cobrem o motor de 5e (crítico dobra dados e não o fixo, vantagem e desvantagem se cancelam, resistência bem-sucedida causa metade, Esculpir Magias poupa exatamente 1 mais o nível da magia), a geometria do campo (linha de visão, terreno difícil, áreas de efeito), a progressão (cada herói termina exatamente na ficha da mesa) a integridade dos capítulos (todo nó é alcançável, todo destino existe, todo terreno cabe no campo) e o save (retomar devolve o grupo exatamente como estava, e gasto maior que o máximo é cortado em vez de virar número impossível).
 
 ## Estrutura
 
@@ -162,6 +164,8 @@ Nenhuma mudança de código. As poses são `idle`, `attack`, `hurt` e `down`, la
 
 ```js
 __debug.capitulos()          // lista os capítulos
+__debug.save()               // o save atual, ou null
+__debug.apagarSave()
 __debug.capitulo(4)          // pula para a Descida, no nível certo
 __debug.novaCampanha()       // começa do zero, nível 1
 __debug.startTestEncounter({ foes: ['SIVAK','AURAK'] })
@@ -184,5 +188,4 @@ A sessão de batalha dá acesso a `encounter` (regras), `field` (grid) e `view` 
 
 - **A ficha do Owo** é a única que ainda não existe em papel. O kit dela é um Patrulheiro padrão mais o que a campanha confirma, e se declara provisório na tela.
 - **Rajada Mística** do Lathuriel: do nível 5 em diante são dois feixes com jogadas separadas, e o motor ainda resolve uma só.
-- **Não há save.** Sair para o início descarta a campanha em andamento, e o menu avisa antes.
 - **Arte:** os inimigos são desenhados pelo motor enquanto não houver PNG pintado. Em ordem de prioridade: três poses novas por herói, retratos de diálogo, depois os inimigos.

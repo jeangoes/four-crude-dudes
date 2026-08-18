@@ -15,6 +15,7 @@ import { HEROES, PARTY_ORDER } from '../data/heroes.js';
 import { spawnGroup } from '../data/monsters.js';
 import { CENAS, NPCS, CONVIDADOS, SOTH } from '../data/npcs.js';
 import { playTrack, SFX } from '../engine/audio.js';
+import * as Save from './save.js';
 
 const FORMACAO = {
   ELANDRIN: { x: 1, y: 3 }, LATHURIEL: { x: 1, y: 5 },
@@ -74,6 +75,9 @@ export class Campaign {
   // ---------- mapa ----------
 
   mostrarMapa() {
+    // Ponto de salvamento: entre nos, com o combate resolvido e nada
+    // pendente. E o unico lugar onde o estado e simples o bastante.
+    this.salvar();
     this.show('map');
     document.getElementById('map-chapter').textContent =
       `${this.capitulo.numero} · ${this.capitulo.titulo}`;
@@ -88,6 +92,44 @@ export class Campaign {
   }
 
   pararMapa() { clearInterval(this.relogioMapa); this.relogioMapa = null; }
+
+  // ---------- save ----------
+
+  salvar() {
+    if (this.semSave) return null;
+    return Save.salvar(this);
+  }
+
+  /**
+   * Retoma uma campanha guardada. Monta o grupo do zero, aplica o nivel do
+   * save e so entao devolve o estado gasto: PV, espacos e recursos vem por
+   * cima da tabela de nivel, nunca no lugar dela.
+   */
+  async retomar(dados) {
+    this.capituloIndex = dados.capitulo;
+    this.nivelAtual = dados.nivel;
+    this.visitados = new Set(dados.visitados || []);
+    this.bandeiras = new Set(dados.bandeiras || []);
+    this.noAtual = dados.no;
+
+    for (const p of this.party) aplicarNivel(p, this.nivelAtual);
+    Save.aplicarAoGrupo(this.party, dados.grupo);
+
+    // Quem estava caido volta de pe com 1 PV: o no vai recomecar, e um
+    // encontro que abre com alguem no chao nao e jogavel.
+    for (const p of this.party) {
+      if (p.dead || p.hp <= 0) {
+        p._dead = false;
+        p.hp = Math.max(1, p.hp);
+        p.deathSaves = { success: 0, failure: 0 };
+        p.conditions.delete('inconsciente');
+        p.conditions.delete('caido');
+      }
+    }
+
+    playTrack(this.capitulo.trilha);
+    this.mostrarMapa();
+  }
 
   atualizarMapa() {
     this.mapa.set(this.capitulo, {

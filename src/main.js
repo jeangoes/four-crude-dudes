@@ -16,6 +16,7 @@ import { Campaign } from './game/campaign.js';
 import { CAPITULOS } from './data/chapters.js';
 import { interludioDe } from './data/interludes.js';
 import { renderSheet } from './ui/sheet.js';
+import * as Save from './game/save.js';
 
 export const VERSION = '4.0-dev';
 
@@ -110,10 +111,11 @@ function wirePausa() {
   });
 
   document.getElementById('btn-pause-title').addEventListener('click', () => {
-    // Sair descarta a campanha em andamento. Sem save ainda, entao vale
-    // dizer isso em vez de deixar o jogador descobrir depois.
-    const emJogo = game.campaign && game.screen !== 'title';
-    if (emJogo && !confirm('Sair para o início encerra esta campanha. O progresso não é salvo. Sair mesmo?')) return;
+    // O progresso e guardado entre os nos, no mapa. Quem sai no meio de um
+    // combate volta ao comeco daquele no, e precisa saber disso.
+    const emCombate = game.screen === 'battle';
+    if (emCombate && !confirm(
+      'O progresso foi guardado no mapa, antes deste combate.\n\nSair agora faz o grupo voltar ao começo deste nó. Sair?')) return;
     voltarAoTitulo();
   });
 }
@@ -131,6 +133,7 @@ export function voltarAoTitulo() {
   game.campaign = null;
   game.session = null;
   Audio.playTrack('menu');
+  atualizarContinuar();
   show('title');
 }
 
@@ -194,9 +197,22 @@ async function boot() {
   document.getElementById('btn-new-game').addEventListener('click', () => {
     Audio.unlock();
     Audio.SFX.select();
+    // Comecar do zero apaga o save. Avisa antes, porque o botao fica ao
+    // lado do Continuar e o clique errado custa a campanha inteira.
+    const guardado = Save.carregar();
+    if (guardado && !confirm(
+      `Começar uma campanha nova apaga o progresso guardado:\n\n${Save.resumoEmTexto(guardado)}\n\nComeçar mesmo assim?`)) return;
+    Save.apagar();
     novaCampanha();
   });
 
+  document.getElementById('btn-continue').addEventListener('click', () => {
+    Audio.unlock();
+    Audio.SFX.select();
+    continuarCampanha();
+  });
+
+  atualizarContinuar();
   show('title');
 
   window.__debug = {
@@ -205,7 +221,10 @@ async function boot() {
     novaCampanha,
     // Pula direto para qualquer capitulo, para nao ter que jogar tudo a cada
     // ajuste. `__debug.capitulo(3)` cai na Descida.
-    capitulo: n => novaCampanha(Math.max(0, Math.min(CAPITULOS.length - 1, n - 1))),
+    capitulo: n => novaCampanha(Math.max(0, Math.min(CAPITULOS.length - 1, n - 1)), { semSave: true }),
+    continuar: continuarCampanha,
+    save: () => Save.carregar(),
+    apagarSave: () => { Save.apagar(); atualizarContinuar(); },
     capitulos: () => CAPITULOS.map((c, i) => `${i + 1}. ${c.numero} ${c.titulo}`),
     campanha: () => game.campaign,
     session: () => game.campaign?.session || game.session,
@@ -214,7 +233,43 @@ async function boot() {
 
 // ---------- campanha ----------
 
-export function novaCampanha(capitulo = 0) {
+// Liga ou desliga o Continuar e mostra onde o grupo parou.
+export function atualizarContinuar() {
+  const dados = Save.carregar();
+  const botao = document.getElementById('btn-continue');
+  const linha = document.getElementById('title-save');
+
+  botao.disabled = !dados;
+  botao.classList.toggle('btn-primary', !!dados);
+  document.getElementById('btn-new-game').classList.toggle('btn-primary', !dados);
+
+  if (!dados) { linha.hidden = true; return; }
+  const r = Save.resumo(dados);
+  const caidos = r.total - r.vivos;
+  linha.hidden = false;
+  linha.innerHTML = `Grupo parado em <b>${r.capitulo}</b>, nível ${r.nivel} · ${r.no}` +
+    (caidos ? ` · ${caidos} caído(s)` : '');
+}
+
+export function continuarCampanha() {
+  const dados = Save.carregar();
+  if (!dados) return null;
+
+  game.campaign?.pararMapa();
+  game.session?.stop();
+  game.session = null;
+
+  const campanha = new Campaign({
+    show,
+    onInterlude: cap => mostrarInterludio(cap),
+    onLevelUp: dados2 => mostrarEvolucao(dados2),
+  });
+  game.campaign = campanha;
+  campanha.retomar(dados);
+  return campanha;
+}
+
+export function novaCampanha(capitulo = 0, { semSave = false } = {}) {
   game.campaign?.pararMapa();
   game.session?.stop();
   game.session = null;
@@ -224,6 +279,8 @@ export function novaCampanha(capitulo = 0) {
     onInterlude: cap => mostrarInterludio(cap),
     onLevelUp: dados => mostrarEvolucao(dados),
   });
+  // Pulo de depuracao nao pode sobrescrever a campanha guardada de verdade.
+  campanha.semSave = semSave;
   game.campaign = campanha;
   campanha.comecar(capitulo);
   return campanha;
@@ -314,6 +371,7 @@ function formatarData(iso) {
 // antes de existirem capitulos.
 export function startTestEncounter({ foes = ['BAAZ', 'BAAZ', 'BAAZ', 'BOZAK'] } = {}) {
   game.campaign?.pararMapa();
+  game.campaign = null;
   game.session?.stop();
 
   const field = new Field({ cols: 12, rows: 8 });

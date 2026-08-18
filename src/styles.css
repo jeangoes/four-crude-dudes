@@ -126,6 +126,13 @@ body::before {
 .title-version { font-family: var(--font-ui); font-size: 0.5rem; color: #5c5044; margin-top: 1rem; }
 .title-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; margin-top: 2rem; }
 .title-hint { font-size: 0.9rem; color: #6f6455; margin-top: 1.6rem; font-style: italic; }
+.title-save {
+  margin-top: 0.7rem;
+  font-size: 0.95rem;
+  color: var(--parchment-2);
+  font-style: italic;
+}
+.title-save b { font-style: normal; color: var(--gold-bright); font-family: var(--font-display); }
 
 /* ---------- interludio (tomo) ---------- */
 
