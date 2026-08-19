@@ -126,7 +126,7 @@ Isso sobe o `tools/serve.py`, que serve com `Cache-Control: no-store`. O `python
 npm test
 ```
 
-162 testes, sem dependências: o `package.json` existe só para ligar o `node --test`. `src/rules/` não conhece DOM nem canvas, então roda no Node direto.
+170 testes, sem dependências: o `package.json` existe só para ligar o `node --test`. `src/rules/` não conhece DOM nem canvas, então roda no Node direto.
 
 Cobrem o motor de 5e (crítico dobra dados e não o fixo, vantagem e desvantagem se cancelam, resistência bem-sucedida causa metade, Esculpir Magias poupa exatamente 1 mais o nível da magia), a geometria do campo (linha de visão, terreno difícil, áreas de efeito), a progressão (cada herói termina exatamente na ficha da mesa) a integridade dos capítulos (todo nó é alcançável, todo destino existe, todo terreno cabe no campo) e o save (retomar devolve o grupo exatamente como estava, e gasto maior que o máximo é cortado em vez de virar número impossível).
 

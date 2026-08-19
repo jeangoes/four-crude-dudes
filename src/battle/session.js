@@ -5,7 +5,7 @@
 // animado. Tudo que muda estado passa pelo Encounter, nunca por aqui.
 
 import { Encounter } from '../rules/combat.js';
-import { castSpell, canCast } from '../rules/spells.js';
+import { canCast } from '../rules/spells.js';
 import { rollNotation, describe } from '../rules/dice.js';
 import { Field, moverCursor, celulaMaisProxima, proximoAlvo } from './field.js';
 import { BattleView } from './view.js';
@@ -675,10 +675,8 @@ export class BattleSession {
     if (spell.range > 1.5) {
       await this.anim.projectile(actor.pos, target.pos, this.view, { color: spell.color || '#b388ff' });
     }
-    const res = castSpell(actor, spell, [target], {});
-    this.encounter.emitAll(res.events);
+    const res = await this.encounter.resolveSpell(actor, spell, [target], {});
     if (res.events.some(e => e.type === 'damage')) await this.anim.recoil(target, this.view);
-    this.encounter.checkEnd();
   }
 
   async resolveArea(actor, pending, center) {
@@ -694,9 +692,7 @@ export class BattleSession {
 
     // Esculpir Magias: poupa os aliados apanhados na area, ate o limite.
     const spared = alvos.filter(c => c.side === actor.side);
-    const res = castSpell(actor, spell, alvos, { spared });
-    this.encounter.emitAll(res.events);
-    this.encounter.checkEnd();
+    await this.encounter.resolveSpell(actor, spell, alvos, { spared });
   }
 
   // ---------- turno do inimigo ----------

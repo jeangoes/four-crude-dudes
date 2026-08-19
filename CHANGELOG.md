@@ -2,6 +2,16 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-19 (efeitos de morte por magia)
+
+### Corrigido
+- **Inimigos mortos por dano de magia não disparavam o efeito de morte do bloco de status (`onDeath`) nem o efeito de quem matou (`onKill`).** Só `Encounter.attack()` os acionava; a resolução de magia emitia dano e chamava `checkEnd` sem passar pelos ganchos. Na mesa isso apareceu como um Baaz morto por Dardo Orientador que não virava estátua nem gerava terreno difícil, enquanto o mesmo Baaz morto por arma virava.
+  - Novo método assíncrono `Encounter.resolveSpell(caster, spell, targets, options)` em `src/rules/combat.js`, que espelha `attack()`: chama a função pura `castSpell`, emite os eventos, e para cada alvo que ficou `down || dead` dispara `triggerDeathEffect` e depois `triggerKillEffect`, antes de `checkEnd()`. Mesma ordem e semântica do caminho de arma.
+  - `resolveSingle` e `resolveArea` em `src/battle/session.js` passam a chamar `resolveSpell` em vez de `castSpell` direto. O `emitAll` e o `checkEnd` que faziam à mão saíram, e a animação de recuo (alvo único) continua depois da resolução, como no caminho de ataque. `castSpell` deixou de ser importado em `session.js`.
+  - `castSpell` continua pura: a assinatura e o formato dos eventos não mudam, e chamá-la sem `Encounter` não dispara efeito de morte. O disparo dos ganchos assíncronos é responsabilidade da camada que a envolve.
+  - Fora do escopo, por paridade deliberada com `attack()`: mortes encadeadas (a explosão do Bozak que mata um segundo inimigo dentro do `onDeath`) não geram novo `death-effect`. Os guards `_deathEffectFired`/`_killEffectFired` evitam disparo duplo por overkill ou segunda instância no mesmo alvo.
+- `tests/rules.test.js`, 8 testes novos (magia de ataque que petrifica o Baaz e marca `entulho` no campo, Bola de Fogo em dois Baaz, magia de resistência a 0 PV, overkill sem duplicar, `onKill` sintético com guard `once`, pureza de `castSpell` sem `Encounter`, aliado caído por área sem efeito de morte, e ordem antes de `checkEnd`). Total do projeto: 170.
+
 ## 2026-08-18 (teclado no campo de batalha)
 
 ### Adicionado

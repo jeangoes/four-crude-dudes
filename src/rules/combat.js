@@ -5,7 +5,7 @@
 // o motor rodavel em teste sem interface.
 
 import { attackRoll, checkRoll, rollNotation, d20, describe } from './dice.js';
-import { dealDamage } from './spells.js';
+import { dealDamage, castSpell } from './spells.js';
 
 export class Encounter {
   /**
@@ -323,6 +323,43 @@ export class Encounter {
 
     this.checkEnd();
     return { ok: true, hit: true, crit: critHit, roll, damage: dmg.total };
+  }
+
+  // ---------- resolucao de magia ----------
+
+  /**
+   * Resolve uma magia como acao do encontro. Espelha `attack()`: chama a
+   * funcao pura `castSpell`, emite os eventos, e para cada alvo que caiu
+   * pelo dano da magia dispara morte e depois matanca, antes de `checkEnd`.
+   *
+   * A pureza de `castSpell` fica intacta: quem quer o gancho de morte por
+   * magia chama este metodo; quem quer so os eventos chama `castSpell` direto.
+   *
+   * `targets` sao os alvos que a magia efetivamente atingiu (`[alvo]` no
+   * alvo unico, os ocupantes da area no de area). Aliado poupado por
+   * Esculpir Magias nao fica `down` e e pulado; aliado a 0 PV fica `down`
+   * mas nao tem `onDeath`, entao `triggerDeathEffect` retorna nulo sem efeito.
+   */
+  async resolveSpell(caster, spell, targets = [], options = {}) {
+    const res = castSpell(caster, spell, targets, options);
+    this.emitAll(res.events);
+
+    if (res.ok) {
+      // Mesma ordem do caminho de arma: morte do alvo, depois matanca do
+      // conjurador, para cada alvo derrubado. Mortes encadeadas (a explosao
+      // do bozak que mata um vizinho) nao entram: a paridade com `attack` e
+      // deliberada. Os guards `_deathEffectFired`/`_killEffectFired` evitam
+      // disparo duplo por overkill ou segunda instancia no mesmo alvo.
+      for (const target of targets) {
+        if (target.down || target.dead) {
+          await this.triggerDeathEffect(target, caster);
+          await this.triggerKillEffect(caster, target);
+        }
+      }
+    }
+
+    this.checkEnd();
+    return res;
   }
 
   // Gancho de quem derrubou. E o que o sivak usa para assumir a forma da

@@ -3,6 +3,10 @@
 // em linguagem direta ao jogador — sem teste, sem nome de função.
 
 export const CHANGELOG = [
+  { version: '4.0.8-dev', date: '2026-08-19', items: [
+    'Draconianos mortos por magia agora reagem como o cânone manda: um Baaz derrubado por Dardo Orientador vira estátua de pedra e o Bozak explode, igual a quando caem no fio da espada. Antes só a arma disparava essas mortes.',
+    'Uma Bola de Fogo que derruba vários inimigos de uma vez aciona o efeito de morte de cada um.',
+  ] },
   { version: '4.0.7-dev', date: '2026-08-18', items: [
     'Agora dá para jogar o combate inteiro no teclado: as setas movem o cursor pelo campo, Tab salta de um alvo para outro e Enter confirma. Antes as setas só andavam no menu, e escolher alvo ou destino exigia o mouse.',
     'Corrigido: andar exatamente um quadrado não saía do lugar e ainda gastava o deslocamento do turno.',

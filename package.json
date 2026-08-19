@@ -1,6 +1,6 @@
 {
   "name": "four-crude-dudes",
-  "version": "4.0.7-dev",
+  "version": "4.0.8-dev",
   "description": "RPG tatico em turno da campanha de Dragonlance da mesa",
   "type": "module",
   "private": true,

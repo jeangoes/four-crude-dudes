@@ -10,6 +10,7 @@ import * as Dice from '../src/rules/dice.js';
 import { defineStatblock, Combatant } from '../src/rules/statblock.js';
 import { Encounter } from '../src/rules/combat.js';
 import { castSpell, canCast, damageAt, cantripDice, beamsFor } from '../src/rules/spells.js';
+import { MONSTERS } from '../src/data/monsters.js';
 
 // `die(sides)` faz floor(rng()*sides)+1. Esta fracao faz o dado cair
 // exatamente em `value`, seja qual for o numero de faces.
@@ -437,5 +438,187 @@ describe('encontro', () => {
     e.rollDeathSave(); e.rollDeathSave();
     assert.equal(e.rollDeathSave().outcome, 'stable');
     Dice.resetRng();
+  });
+});
+
+describe('efeitos de morte por magia', () => {
+  // Um baaz de verdade, com o onDeath do cânone (vira estátua). Ids distintos
+  // para dois baaz no mesmo encontro e pos própria, que a resolução lê.
+  function makeBaazReal(id = 'baazM', pos = { x: 3, y: 3 }) {
+    const sb = MONSTERS.BAAZ();
+    sb.id = id;
+    return new Combatant(sb, { side: 'foe', pos });
+  }
+
+  // Campo falso: o onDeath do baaz só precisa de setTerrain e addHazard. Assim
+  // o teste verifica o efeito colateral sem depender do Field de battle/.
+  function fakeField() {
+    return {
+      terrain: {},
+      hazards: [],
+      setTerrain(pos, t) { this.terrain[`${pos.x},${pos.y}`] = t; },
+      addHazard(h) { this.hazards.push(h); },
+    };
+  }
+
+  const dardo = {
+    id: 'guidingBolt', name: 'Dardo Orientador', level: 1, school: 'evocacao',
+    attack: true, damage: { dice: '2d6', type: 'radiante' },
+  };
+  const fireball = {
+    id: 'fireball', name: 'Bola de Fogo', level: 3, school: 'evocacao',
+    save: { ability: 'des', onSuccess: 'metade' },
+    damage: { dice: '8d6', type: 'fogo', perLevel: 'd6' },
+  };
+
+  test('magia de ataque que mata um baaz dispara death-effect e marca entulho no campo', async () => {
+    const d = makeDarian();
+    const b = makeBaazReal('baazM1', { x: 4, y: 2 });
+    b.hp = 5;
+    const enc = new Encounter({ combatants: [d, b] });
+    enc.field = fakeField();
+
+    let step = 0;
+    Dice.setRng(() => { step++; return step === 1 ? frac(20, 20) : frac(6, 6); });
+    await enc.resolveSpell(d, dardo, [b], {});
+    Dice.resetRng();
+
+    assert.equal(b.down, true);
+    assert.ok(enc.history.some(e => e.type === 'death-effect'));
+    assert.equal(enc.field.terrain['4,2'], 'entulho');
+    assert.ok(enc.field.hazards.some(h => h.id === 'estatua-baazM1'));
+  });
+
+  test('Bola de Fogo que derruba dois baaz dispara um death-effect por alvo', async () => {
+    const d = makeDarian();
+    const b1 = makeBaazReal('baazA', { x: 3, y: 3 });
+    const b2 = makeBaazReal('baazB', { x: 4, y: 3 });
+    b1.hp = 5; b2.hp = 5;
+    const enc = new Encounter({ combatants: [d, b1, b2] });
+    enc.field = fakeField();
+
+    // Nat 1 na salvaguarda de cada um: falham e comem o dano cheio.
+    Dice.setRng(() => frac(1, 20));
+    await enc.resolveSpell(d, fireball, [b1, b2], {});
+    Dice.resetRng();
+
+    const mortes = enc.history.filter(e => e.type === 'death-effect');
+    assert.equal(mortes.length, 2);
+    assert.deepEqual(mortes.map(e => e.target), ['baazA', 'baazB']);
+    assert.equal(enc.field.hazards.length, 2);
+  });
+
+  test('magia de resistência com dano que leva o alvo a 0 PV dispara o onDeath', async () => {
+    const d = makeDarian();
+    const b = makeBaazReal('baazR', { x: 2, y: 2 });
+    b.hp = 6;
+    const enc = new Encounter({ combatants: [d, b] });
+    enc.field = fakeField();
+
+    Dice.setRng(() => frac(1, 20));   // falha na salvaguarda, dano cheio
+    await enc.resolveSpell(d, fireball, [b], {});
+    Dice.resetRng();
+
+    assert.equal(b.down, true);
+    assert.ok(enc.history.some(e => e.type === 'death-effect' && e.target === 'baazR'));
+  });
+
+  test('overkill e segunda instância no mesmo alvo não duplicam death-effect', async () => {
+    const d = makeDarian();
+    const b = makeBaazReal('baazO', { x: 5, y: 5 });
+    b.hp = 3;                          // 8d6 de Bola de Fogo é overkill
+    const enc = new Encounter({ combatants: [d, b] });
+    enc.field = fakeField();
+
+    Dice.setRng(() => frac(1, 20));
+    await enc.resolveSpell(d, fireball, [b], {});
+    // Segunda magia grátis no alvo já caído: o guard _deathEffectFired barra.
+    await enc.resolveSpell(d, { ...dardo, id: 'g2' }, [b], { free: true });
+    Dice.resetRng();
+
+    assert.equal(enc.history.filter(e => e.type === 'death-effect').length, 1);
+  });
+
+  test('conjurador sem onKill não emite kill-effect; com onKill once emite uma vez', async () => {
+    // Sem onKill (caso dos personagens jogáveis).
+    const d = makeDarian();
+    const b = makeBaazReal('baazK', { x: 1, y: 1 });
+    b.hp = 5;
+    const enc = new Encounter({ combatants: [d, b] });
+    enc.field = fakeField();
+    let step = 0;
+    Dice.setRng(() => { step++; return step === 1 ? frac(20, 20) : frac(6, 6); });
+    await enc.resolveSpell(d, dardo, [b], {});
+    assert.equal(enc.history.some(e => e.type === 'kill-effect'), false);
+
+    // Com onKill sintético e guard once: dois baaz mortos, um só kill-effect.
+    const d2 = makeDarian();
+    let vezes = 0;
+    d2.sb.onKill = { id: 'ceifa', once: true, label: 'ceifa', resolve: () => { vezes++; return []; } };
+    const c1 = makeBaazReal('baazX', { x: 2, y: 1 });
+    const c2 = makeBaazReal('baazY', { x: 3, y: 1 });
+    c1.hp = 5; c2.hp = 5;
+    const enc2 = new Encounter({ combatants: [d2, c1, c2] });
+    enc2.field = fakeField();
+    Dice.setRng(() => frac(1, 20));
+    await enc2.resolveSpell(d2, fireball, [c1, c2], {});
+    Dice.resetRng();
+    assert.equal(enc2.history.filter(e => e.type === 'kill-effect').length, 1);
+    assert.equal(vezes, 1);
+  });
+
+  test('castSpell chamada sem Encounter não dispara efeito de morte', () => {
+    const d = makeDarian();
+    const b = makeBaazReal('baazP', { x: 3, y: 3 });
+    b.hp = 5;
+    let step = 0;
+    Dice.setRng(() => { step++; return step === 1 ? frac(20, 20) : frac(6, 6); });
+    const res = castSpell(d, dardo, [b], {});   // função pura, sem Encounter
+    Dice.resetRng();
+
+    assert.ok(res.ok);
+    assert.equal(b.down, true);                 // caiu pelo dano
+    assert.equal(res.events.some(e => e.type === 'death-effect'), false);
+    assert.equal(res.events.some(e => e.type === 'terrain'), false);
+  });
+
+  test('aliado derrubado por área não gera death-effect nem kill-effect', async () => {
+    const d = makeDarian();
+    // Aliado frágil apanhado na Bola de Fogo, sem Esculpir Magias (spared vazio).
+    const aliado = new Combatant(defineStatblock({
+      id: 'owo', name: 'Owo', level: 5, side: 'ally',
+      abilities: { for: 12, des: 16, con: 12, int: 10, sab: 14, car: 10 },
+      ac: 15, maxHp: 5, speed: 9,
+    }), { side: 'ally', pos: { x: 4, y: 4 } });
+    const enc = new Encounter({ combatants: [d, aliado] });
+    enc.field = fakeField();
+
+    Dice.setRng(() => frac(1, 20));   // falha na salvaguarda, cai
+    await enc.resolveSpell(d, fireball, [aliado], {});
+    Dice.resetRng();
+
+    assert.equal(aliado.down, true);
+    assert.equal(aliado.has('inconsciente'), true);
+    assert.equal(enc.history.some(e => e.type === 'death-effect'), false);
+    assert.equal(enc.history.some(e => e.type === 'kill-effect'), false);
+  });
+
+  test('efeitos de morte por magia disparam antes de checkEnd', async () => {
+    const d = makeDarian();
+    const b = makeBaazReal('baazE', { x: 3, y: 3 });
+    b.hp = 5;
+    const enc = new Encounter({ combatants: [d, b] });
+    enc.field = fakeField();
+
+    let step = 0;
+    Dice.setRng(() => { step++; return step === 1 ? frac(20, 20) : frac(6, 6); });
+    await enc.resolveSpell(d, dardo, [b], {});   // mata o último inimigo
+    Dice.resetRng();
+
+    assert.equal(enc.finished, true);
+    assert.equal(enc.outcome, 'vitoria');
+    const iMorte = enc.history.findIndex(e => e.type === 'death-effect');
+    const iFim = enc.history.findIndex(e => e.type === 'end');
+    assert.ok(iMorte >= 0 && iFim >= 0 && iMorte < iFim);
   });
 });
