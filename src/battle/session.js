@@ -7,7 +7,7 @@
 import { Encounter } from '../rules/combat.js';
 import { castSpell, canCast } from '../rules/spells.js';
 import { rollNotation, describe } from '../rules/dice.js';
-import { Field } from './field.js';
+import { Field, moverCursor, celulaMaisProxima, proximoAlvo } from './field.js';
 import { BattleView } from './view.js';
 import { Animator } from './animator.js';
 import { planTurn } from './ai.js';
@@ -18,6 +18,7 @@ import { attachPointer, on } from '../engine/input.js';
 import { SFX, playTrack, duckTrack } from '../engine/audio.js';
 
 const MODE = { IDLE: 'idle', COMMAND: 'command', TARGET: 'target', MOVE: 'move', BUSY: 'busy', OVER: 'over' };
+const DIR_TECLA = new Set(['up', 'down', 'left', 'right']);
 
 export class BattleSession {
   constructor({ canvas, field, party, foes, track = 'vogler', backdrop = null, name = 'Encontro',
@@ -457,6 +458,11 @@ export class BattleSession {
       cobreTudo ? [] : cells);
     this.hud.showBanner(spec.area ? 'Escolha o centro da área' : 'Escolha o alvo', 1100);
 
+    // O cursor nasce no alvo mais perto de quem age. Quem joga no teclado
+    // confirma sem mexer; quem joga no mouse nem percebe, porque o proximo
+    // hover manda.
+    this.setCursor(celulaMaisProxima(actor.pos, cells) || actor.pos);
+
     this.hud.renderCommands([
       { id: 'cancelar', label: '← Cancelar', disabled: false, run: () => this.openCommandMenu(actor) },
     ], cmd => { SFX.cancel(); cmd.run(); });
@@ -466,6 +472,7 @@ export class BattleSession {
     this.mode = MODE.MOVE;
     this.reachMap = this.field.reachable(actor, actor.turn.movement);
     this.view.setOverlay('move', [...this.reachMap.values()].map(v => v.cell));
+    this.setCursor({ ...actor.pos });
     this.hud.showBanner('Escolha o destino', 1100);
     this.hud.renderCommands([
       { id: 'cancelar', label: '← Cancelar', disabled: false, run: () => { this.view.clearOverlays(); this.openCommandMenu(actor); } },
@@ -506,28 +513,56 @@ export class BattleSession {
       toCell: (x, y) => this.view.pixelToCell(x, y),
     }));
 
-    this.detachers.push(on('hover', ({ cell }) => {
-      this.view.cursor = cell;
-      if (this.mode === MODE.MOVE && cell && this.reachMap) {
-        const actor = this.encounter.current;
-        this.view.path = this.field.pathFrom(this.reachMap, actor, cell);
-      } else if (this.mode === MODE.TARGET && cell) {
-        this.previewArea(cell);
-      } else {
-        this.view.path = null;
-      }
-    }));
+    this.detachers.push(on('hover', ({ cell }) => this.setCursor(cell)));
 
     this.detachers.push(on('pick', ({ cell }) => this.onPick(cell)));
 
     this.detachers.push(on('action', ({ action }) => {
       if (this.anim.busy) { this.anim.skipAll(); return; }
+
+      // Escolher alvo ou destino e coisa do campo, nao do menu. Nesses dois
+      // modos o menu so tem "Cancelar", entao as setas e o confirmar
+      // pertencem ao cursor. Sem isto o teclado nao joga: o confirmar caia
+      // no Cancelar e voltava ao comando.
+      if (this.mode === MODE.TARGET || this.mode === MODE.MOVE) {
+        if (DIR_TECLA.has(action)) {
+          this.setCursor(moverCursor(this.view.cursor, action, this.field.cols, this.field.rows));
+          return;
+        }
+        if (action === 'next' || action === 'prev') { this.cicloAlvo(action === 'next' ? 1 : -1); return; }
+        if (action === 'confirm') { this.onPick(this.view.cursor); return; }
+        return;
+      }
+
       if (action === 'up') this.hud.move(-1);
       if (action === 'down') this.hud.move(1);
       if (action === 'confirm') this.hud.confirm();
       // O Esc e resolvido em main.js, que consulta escVolta() antes de
       // abrir a pausa. Deixar os dois tratarem abriria a pausa por cima.
     }));
+  }
+
+  // Um so lugar decide o que acontece quando o cursor muda de quadrado,
+  // venha ele do ponteiro ou das setas. Foi o que faltava para o teclado.
+  setCursor(cell) {
+    this.view.cursor = cell;
+    if (this.mode === MODE.MOVE && cell && this.reachMap) {
+      this.view.path = this.field.pathFrom(this.reachMap, this.encounter.current, cell);
+    } else if (this.mode === MODE.TARGET && cell) {
+      this.previewArea(cell);
+    } else {
+      this.view.path = null;
+    }
+  }
+
+  // Tab, Q e E saltam de alvo em alvo. Numa sala com seis inimigos, andar
+  // quadrado a quadrado ate o do outro canto seria castigo.
+  cicloAlvo(passo) {
+    if (this.mode !== MODE.TARGET) return;
+    const spec = this.pending?.spell || this.pending?.action;
+    const cells = spec?.area ? this.pending.targets : (this.pending?.targets || []).map(t => t.pos);
+    const proximo = proximoAlvo(cells, this.view.cursor, passo);
+    if (proximo) { SFX.select(); this.setCursor(proximo); }
   }
 
   // Mostra a area coberta antes de confirmar. E o que torna Bola de Fogo

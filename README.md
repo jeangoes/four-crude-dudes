@@ -92,9 +92,10 @@ A abertura de cada capítulo traz o texto da crônica publicada no [Diário de C
 
 | Tecla | Ação |
 |:--|:--|
-| Setas ou WASD | Navegar menu e campo |
+| Setas ou WASD | Navegar o menu; no campo, mover o cursor um quadrado |
 | Enter, Espaço ou Z | Confirmar |
 | Esc, X ou Backspace | Voltar um passo; no menu principal, abre a pausa |
+| Tab, Q ou E | Saltar para o próximo alvo válido (na mira) |
 | I | Ficha do grupo |
 | L | Log de combate |
 | M | Mudo |
@@ -110,12 +111,14 @@ No celular, toque no campo para escolher quadrado e nos itens de menu para confi
 O jogo usa módulos ES, então precisa ser servido por HTTP. Abrir o `index.html` direto pelo `file://` não funciona.
 
 ```bash
-python3 -m http.server
+npm run serve
 ```
 
 Depois abra `http://localhost:8000`.
 
-**Aviso para quem for mexer no código:** o navegador guarda módulos ES em cache com força, e o `http.server` não manda cabeçalho que impeça isso. Se você editar um arquivo e a mudança não aparecer, provavelmente não é o seu código. Recarregue ignorando o cache (Ctrl+Shift+R) ou sirva com `Cache-Control: no-store`.
+Isso sobe o `tools/serve.py`, que serve com `Cache-Control: no-store`. O `python3 -m http.server` também funciona, mas não manda cabeçalho contra cache, e o navegador guarda módulo ES com força: editar um arquivo e a mudança não aparecer quase sempre é isso, não o seu código.
+
+**Ressalva:** a query `?v=` do `index.html` versiona só `src/main.js` e `src/styles.css`. Os módulos que eles importam mantêm a mesma URL, então uma aba antiga pode acabar com o `main.js` novo e submódulos velhos. Se o comportamento não bater com o código, confira o que está carregado de fato antes de caçar o bug.
 
 ## Testes
 
@@ -123,7 +126,7 @@ Depois abra `http://localhost:8000`.
 npm test
 ```
 
-153 testes, sem dependências: o `package.json` existe só para ligar o `node --test`. `src/rules/` não conhece DOM nem canvas, então roda no Node direto.
+162 testes, sem dependências: o `package.json` existe só para ligar o `node --test`. `src/rules/` não conhece DOM nem canvas, então roda no Node direto.
 
 Cobrem o motor de 5e (crítico dobra dados e não o fixo, vantagem e desvantagem se cancelam, resistência bem-sucedida causa metade, Esculpir Magias poupa exatamente 1 mais o nível da magia), a geometria do campo (linha de visão, terreno difícil, áreas de efeito), a progressão (cada herói termina exatamente na ficha da mesa) a integridade dos capítulos (todo nó é alcançável, todo destino existe, todo terreno cabe no campo) e o save (retomar devolve o grupo exatamente como estava, e gasto maior que o máximo é cortado em vez de virar número impossível).
 

@@ -298,3 +298,45 @@ export class Field {
     return expired;
   }
 }
+
+// ---------- cursor de teclado ----------
+//
+// O campo sempre foi dirigido pelo ponteiro. Estas duas funcoes sao a parte
+// pura do que o teclado precisa para fazer o mesmo, e ficam aqui, longe do
+// DOM, para poderem ser testadas no Node como o resto das regras.
+
+const DIRECOES = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+// Anda um quadrado e para na borda. Nao valida se o destino serve para a
+// acao em curso: isso e decisao de quem confirma, igual ao ponteiro, que
+// tambem passeia livre por cima do tabuleiro.
+export function moverCursor(cell, dir, cols = COLS, rows = ROWS) {
+  const d = DIRECOES[dir];
+  if (!cell || !d) return cell || null;
+  return {
+    x: Math.min(cols - 1, Math.max(0, cell.x + d[0])),
+    y: Math.min(rows - 1, Math.max(0, cell.y + d[1])),
+  };
+}
+
+// Onde o cursor nasce ao abrir a mira: no alvo mais perto de quem age, para
+// que confirmar sem mexer ja faca a coisa obvia.
+export function celulaMaisProxima(origem, celulas) {
+  if (!celulas?.length) return null;
+  if (!origem) return celulas[0];
+  let melhor = celulas[0];
+  let menor = Infinity;
+  for (const c of celulas) {
+    const d = Field.steps(origem, c);
+    if (d < menor) { menor = d; melhor = c; }
+  }
+  return melhor;
+}
+
+// Ciclo de alvos no Tab/Q/E. Estavel: mesma ordem sempre, e volta ao inicio.
+export function proximoAlvo(celulas, atual, passo = 1) {
+  if (!celulas?.length) return null;
+  const i = celulas.findIndex(c => atual && c.x === atual.x && c.y === atual.y);
+  if (i < 0) return celulas[0];
+  return celulas[(i + passo + celulas.length) % celulas.length];
+}

@@ -5,7 +5,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { Field, TILE } from '../src/battle/field.js';
+import { Field, TILE, moverCursor, celulaMaisProxima, proximoAlvo } from '../src/battle/field.js';
 import { defineStatblock, Combatant } from '../src/rules/statblock.js';
 
 const dummy = (id, side = 'ally') => new Combatant(defineStatblock({
@@ -218,5 +218,53 @@ describe('perigos no chao', () => {
     f.addHazard({ id: 'estatua', label: 'estátua', cells: [{ x: 1, y: 4 }], terrain: 'entulho', rounds: 7 });
     assert.equal(f.reachable(c, 9).get('1,4').cost, 3, 'pisar na estátua custa o dobro');
     assert.equal(f.terrainAt({ x: 1, y: 4 }).label, 'entulho');
+  });
+});
+
+// O campo so era dirigivel pelo ponteiro. Estas funcoes sao a parte pura do
+// cursor de teclado, e existem separadas justamente para caber aqui.
+describe('cursor de teclado', () => {
+  test('anda um quadrado por vez em cada direcao', () => {
+    const c = { x: 5, y: 4 };
+    assert.deepEqual(moverCursor(c, 'up', 12, 8), { x: 5, y: 3 });
+    assert.deepEqual(moverCursor(c, 'down', 12, 8), { x: 5, y: 5 });
+    assert.deepEqual(moverCursor(c, 'left', 12, 8), { x: 4, y: 4 });
+    assert.deepEqual(moverCursor(c, 'right', 12, 8), { x: 6, y: 4 });
+  });
+
+  test('para na borda em vez de sair do tabuleiro', () => {
+    assert.deepEqual(moverCursor({ x: 0, y: 0 }, 'up', 12, 8), { x: 0, y: 0 });
+    assert.deepEqual(moverCursor({ x: 0, y: 0 }, 'left', 12, 8), { x: 0, y: 0 });
+    assert.deepEqual(moverCursor({ x: 11, y: 7 }, 'right', 12, 8), { x: 11, y: 7 });
+    assert.deepEqual(moverCursor({ x: 11, y: 7 }, 'down', 12, 8), { x: 11, y: 7 });
+  });
+
+  test('direcao desconhecida ou cursor ausente nao inventa quadrado', () => {
+    assert.deepEqual(moverCursor({ x: 2, y: 2 }, 'confirm', 12, 8), { x: 2, y: 2 });
+    assert.equal(moverCursor(null, 'up', 12, 8), null);
+  });
+
+  test('a mira nasce no alvo mais perto de quem age', () => {
+    const alvos = [{ x: 10, y: 1 }, { x: 3, y: 2 }, { x: 8, y: 6 }];
+    assert.deepEqual(celulaMaisProxima({ x: 2, y: 2 }, alvos), { x: 3, y: 2 });
+    assert.deepEqual(celulaMaisProxima({ x: 9, y: 7 }, alvos), { x: 8, y: 6 });
+  });
+
+  test('sem alvo nao ha onde nascer', () => {
+    assert.equal(celulaMaisProxima({ x: 0, y: 0 }, []), null);
+    assert.equal(celulaMaisProxima({ x: 0, y: 0 }, null), null);
+  });
+
+  test('Tab cicla alvos e volta ao inicio', () => {
+    const alvos = [{ x: 1, y: 1 }, { x: 4, y: 4 }, { x: 7, y: 2 }];
+    assert.deepEqual(proximoAlvo(alvos, { x: 1, y: 1 }, 1), { x: 4, y: 4 });
+    assert.deepEqual(proximoAlvo(alvos, { x: 7, y: 2 }, 1), { x: 1, y: 1 });
+    assert.deepEqual(proximoAlvo(alvos, { x: 1, y: 1 }, -1), { x: 7, y: 2 });
+  });
+
+  test('ciclar a partir de um quadrado que nao e alvo cai no primeiro', () => {
+    const alvos = [{ x: 1, y: 1 }, { x: 4, y: 4 }];
+    assert.deepEqual(proximoAlvo(alvos, { x: 9, y: 9 }, 1), { x: 1, y: 1 });
+    assert.equal(proximoAlvo([], { x: 1, y: 1 }, 1), null);
   });
 });

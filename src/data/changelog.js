@@ -3,6 +3,10 @@
 // em linguagem direta ao jogador — sem teste, sem nome de função.
 
 export const CHANGELOG = [
+  { version: '4.0.7-dev', date: '2026-08-18', items: [
+    'Agora dá para jogar o combate inteiro no teclado: as setas movem o cursor pelo campo, Tab salta de um alvo para outro e Enter confirma. Antes as setas só andavam no menu, e escolher alvo ou destino exigia o mouse.',
+    'Corrigido: andar exatamente um quadrado não saía do lugar e ainda gastava o deslocamento do turno.',
+  ] },
   { version: '4.0.6-dev', date: '2026-08-18', items: [
     'Corrigido: a tela às vezes ficava presa numa versão antiga até você atualizar a página na força.',
   ] },

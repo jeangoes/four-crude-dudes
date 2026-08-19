@@ -39,8 +39,12 @@ export class Animator {
   // Anda um caminho de quadrados, um passo de cada vez.
   async walk(combatant, path, view, { stepTime = 0.13 } = {}) {
     combatant.anim = { pose: 'idle', offset: { x: 0, y: 0 } };
-    for (let i = 1; i < path.length; i++) {
-      const from = view.cellCenter(path[i - 1]);
+    // `pathFrom` devolve so os quadrados a percorrer, sem a origem. Comecar
+    // em i=1 comia o primeiro passo: num caminho de um quadrado so, o laco
+    // nao rodava e o combatente ficava parado gastando deslocamento.
+    let anterior = combatant.pos;
+    for (let i = 0; i < path.length; i++) {
+      const from = view.cellCenter(anterior);
       const to = view.cellCenter(path[i]);
       await this.run({
         duration: stepTime,
@@ -53,6 +57,7 @@ export class Animator {
       });
       combatant.pos = { ...path[i] };
       combatant.anim.offset = { x: 0, y: 0 };
+      anterior = path[i];
     }
     combatant.anim = null;
   }

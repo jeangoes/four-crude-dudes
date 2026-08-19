@@ -2,6 +2,23 @@
 
 Registra a evolução do jogo. Mais recente no topo.
 
+## 2026-08-18 (teclado no campo de batalha)
+
+### Adicionado
+- **O teclado agora dirige o campo, não só o menu.** `attachKeyboard` sempre alimentou apenas o `hud` (subir, descer, confirmar); escolher alvo ou destino saía exclusivamente do `on('pick')` do ponteiro sobre o canvas. O resultado é que o jogo não era jogável sem mouse, e em modo de mira o confirmar caía no item "← Cancelar" do próprio menu e voltava ao comando. O `README.md` prometia "Setas ou WASD: navegar menu **e campo**", o que nunca foi verdade.
+  - Em `MODE.TARGET` e `MODE.MOVE`, o manipulador de `action` em `bindInput` passa a rotear setas, `next`/`prev` e `confirm` para o cursor, em vez do menu (que nesses modos só tem "Cancelar").
+  - Novo `setCursor(cell)` concentra o que acontece quando o cursor muda de quadrado. O `on('hover')` do ponteiro e as setas chamam o mesmo caminho, então a prévia de área da Bola de Fogo e o desenho do caminho de movimento valem para os dois.
+  - `Tab`/`Q`/`E` ciclam entre alvos válidos, via `cicloAlvo`. Já estavam mapeados em `KEYMAP` e ociosos em batalha.
+  - O cursor nasce no alvo mais perto de quem age (`beginTargeting`) ou sobre o próprio ator (`beginMove`), para que confirmar sem mexer faça a coisa óbvia.
+- Três funções puras novas em `src/battle/field.js` — `moverCursor`, `celulaMaisProxima` e `proximoAlvo` — deliberadamente fora de `session.js`, que depende de DOM. É o que torna a mudança testável no Node. `tests/field.test.js`, 7 testes novos. Total do projeto: 162.
+- **`tools/serve.py`**: servidor de desenvolvimento com `Cache-Control: no-store`, ancorado na raiz do repo pelo caminho do próprio script. `npm run serve` e o `launch.json` agora apontam para ele.
+
+### Corrigido
+- **Andar exatamente um quadrado não saía do lugar, e ainda cobrava o deslocamento.** `pathFrom` devolve só os quadrados a percorrer, sem a origem, mas `walk` iterava a partir de `i = 1` assumindo que a origem estava lá. Num caminho de um quadrado o laço não rodava; em caminhos maiores o primeiro passo não era animado, ainda que o destino final saísse certo por acidente. `walk` agora parte da posição atual do combatente. Bug anterior a este bloco, no caminho do ponteiro também.
+
+### Aberto
+- **A query `?v=` não alcança os módulos importados.** Ela versiona apenas `src/main.js` e `src/styles.css` no `index.html`; `session.js`, `animator.js`, `field.js` e os demais mantêm a mesma URL para sempre e podem vir do cache. Quem já abriu o jogo pode acabar com `main.js` novo e submódulos antigos, ou seja, um grafo de módulos misturado. Apareceu na verificação deste bloco: o navegador rodou o `animator.js` antigo com a versão 4.0.7 na tela. Não corrigido aqui.
+
 ## 2026-08-18 (correção: cache do GitHub Pages)
 
 ### Corrigido
